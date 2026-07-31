@@ -55,6 +55,7 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.RegularLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SecretWellRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.MagicWellRoom;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.utils.DungeonSeed;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndMessage;
 import com.watabou.utils.Random;
@@ -177,14 +178,14 @@ public class SeedFinder {
 						|| (i instanceof Weapon && ((Weapon) i).hasGoodEnchant()) || (i instanceof Wand)
 						|| (i instanceof Artifact)) && i.cursed) {
 
-					cursed = "cursed ";
+					cursed = Messages.get(SeedFinder.class, "cursed_prefix");
 				}
 
 				if (i instanceof Scroll || i instanceof Potion || i instanceof Ring) {
 					int txtLength = i.title().length();
 
 					if (i.cursed) {
-						builder.append("- cursed ");
+						builder.append("- " + Messages.get(SeedFinder.class, "cursed_prefix"));
 						txtLength += 7;
 					} else {
 						builder.append("- ");
@@ -198,7 +199,7 @@ public class SeedFinder {
 
 					builder.append(i.title().toLowerCase() + tabstring); // item
 					builder.append(i.anonymousName().toLowerCase().replace(" potion", "").replace("scroll of ", "")
-							.replace(" ring", "")); // color, rune or gem
+							.replace(" ring", "").replace("药剂", "").replace("卷轴", "").replace("戒指", "")); // color, rune or gem
 
 					// if both location and type are logged only space to the right once
 					if (h.type != Type.HEAP) {
@@ -231,7 +232,7 @@ public class SeedFinder {
 
 			for (Item i : items) {
 				if (i.cursed)
-					builder.append("- cursed " + i.title().toLowerCase() + "\n");
+					builder.append("- " + Messages.get(SeedFinder.class, "cursed_prefix") + i.title().toLowerCase() + "\n");
 
 				else
 					builder.append("- " + i.title().toLowerCase() + "\n");
@@ -267,7 +268,7 @@ public class SeedFinder {
 							@Override
 							public void run() {
 								ShatteredPixelDungeon.scene()
-										.addToFront(new WndMessage("searched through _" + Long.toString(finalI - finalStart) + "_ seeds."));
+										.addToFront(new WndMessage(Messages.get(SeedFinder.class, "searched", finalI - finalStart)));
 							}
 						});
 						return DungeonSeed.convertToCode(Dungeon.seed);
@@ -275,10 +276,10 @@ public class SeedFinder {
 				}
 			}
 		} catch (InterruptedException e) {
-			return "error: search cancelled";
+			return "error: " + Messages.get(SeedFinder.class, "search_cancelled");
 		}
 
-		return "error: invalid finding mode";
+		return "error: " + Messages.get(SeedFinder.class, "invalid_mode");
 	}
 
 	private ArrayList<String> getRooms() {
@@ -292,9 +293,9 @@ public class SeedFinder {
 				String wellstr;
 
 				if (room1.generatedWellWater == WaterOfAwareness.class) {
-					wellstr = " (awareness)";
+					wellstr = " (" + Messages.get(SeedFinder.class, "well_awareness") + ")";
 				} else if (room1.generatedWellWater == WaterOfHealth.class) {
-					wellstr = " (health)";
+					wellstr = " (" + Messages.get(SeedFinder.class, "well_health") + ")";
 				} else {
 					wellstr = " (?)";
 				}
@@ -335,6 +336,7 @@ public class SeedFinder {
 				tabstring += Options.spacingChar;
 			}
 
+			roomType = Messages.get(SeedFinder.class, "room_" + roomType);
 			roomstr += tabstring + roomType;
 
 			rooms.add(roomstr);
@@ -579,7 +581,7 @@ public class SeedFinder {
 		if (Options.logTrinkets) {
 			ArrayList<HeapItem> trinkets = getTrinkets();
 			StringBuilder builder = new StringBuilder();
-			addTextItems("Trinkets", trinkets, builder, "\n");
+			addTextItems(Messages.get(SeedFinder.class, "trinkets"), trinkets, builder, "\n");
 			log[0] += builder.toString();
 		}
 
@@ -600,60 +602,59 @@ public class SeedFinder {
 
 			switch (feeling) {
 				case "NONE":
-					feeling = "no feeling";
+					feeling = Messages.get(SeedFinder.class, "feeling_none");
 					break;
 				case "CHASM":
-					feeling = "chasms";
+					feeling = Messages.get(SeedFinder.class, "feeling_chasm");
 					break;
 				case "WATER":
-					feeling = "water";
+					feeling = Messages.get(SeedFinder.class, "feeling_water");
 					break;
 				case "GRASS":
-					feeling = "vegetation";
+					feeling = Messages.get(SeedFinder.class, "feeling_grass");
 					break;
 				case "DARK":
-					feeling = "enemies moving in the darkness";
+					feeling = Messages.get(SeedFinder.class, "feeling_dark");
 					break;
 				case "LARGE":
-					feeling = "unusually large";
+					feeling = Messages.get(SeedFinder.class, "feeling_large");
 					break;
 				case "TRAPS":
-					feeling = "traps";
+					feeling = Messages.get(SeedFinder.class, "feeling_traps");
 					break;
 				case "SECRETS":
-					feeling = "secrets";
+					feeling = Messages.get(SeedFinder.class, "feeling_secrets");
 					break;
 			}
 
 			switch (Dungeon.depth) {
 				case 5:
-					feeling = "goo";
+					feeling = Messages.get(SeedFinder.class, "boss_goo");
 					break;
 
 				case 10:
-					feeling = "tengu";
+					feeling = Messages.get(SeedFinder.class, "boss_tengu");
 					break;
 
 				case 15:
-					feeling = "DM-300";
+					feeling = Messages.get(SeedFinder.class, "boss_dm300");
 					break;
 
 				case 20:
-					feeling = "dwarven king";
+					feeling = Messages.get(SeedFinder.class, "boss_king");
 					break;
 
 				case 25:
-					feeling = "yog dzewa";
+					feeling = Messages.get(SeedFinder.class, "boss_yog");
 					break;
 			}
 
-			log[i] += ("floor " + Dungeon.depth + " (");
-			log[i] += (feeling + "):\n\n");
+			log[i] += Messages.get(SeedFinder.class, "floor", Dungeon.depth, feeling) + "\n\n";
 
 			// list all rooms of level
 			if (Dungeon.depth % 5 != 0 && Dungeon.depth < 26) {
 				ArrayList<String> rooms = getRooms();
-				log_roomsonly[i] += ("Rooms: \n");
+				log_roomsonly[i] += (Messages.get(SeedFinder.class, "rooms") + ": \n");
 
 				for (int k = 0; k < rooms.size(); k++) {
 					log_roomsonly[i] += ("- " + rooms.get(k) + "\n");
@@ -663,23 +664,23 @@ public class SeedFinder {
 			} else if (Dungeon.depth % 5 == 0) {
 				switch (Dungeon.depth) {
 				case 5:
-					log_roomsonly[i] += "goo";
+					log_roomsonly[i] += Messages.get(SeedFinder.class, "boss_goo");
 					break;
 
 				case 10:
-					log_roomsonly[i] += "tengu";
+					log_roomsonly[i] += Messages.get(SeedFinder.class, "boss_tengu");
 					break;
 
 				case 15:
-					log_roomsonly[i] += "DM-300";
+					log_roomsonly[i] += Messages.get(SeedFinder.class, "boss_dm300");
 					break;
 
 				case 20:
-					log_roomsonly[i] += "dwarven king";
+					log_roomsonly[i] += Messages.get(SeedFinder.class, "boss_king");
 					break;
 
 				case 25:
-					log_roomsonly[i] += "yog dzewa";
+					log_roomsonly[i] += Messages.get(SeedFinder.class, "boss_yog");
 					break;
 				}
 			}
@@ -692,7 +693,7 @@ public class SeedFinder {
 				rewards.add(Ghost.Quest.weapon.enchant(Ghost.Quest.enchant).identify());
 				Ghost.Quest.complete();
 
-				addTextQuest("Ghost quest rewards", rewards, builder);
+				addTextQuest(Messages.get(SeedFinder.class, "ghost_rewards"), rewards, builder);
 			}
 
 			if (Wandmaker.Quest.wand1 != null) {
@@ -701,37 +702,37 @@ public class SeedFinder {
 				rewards.add(Wandmaker.Quest.wand2.identify());
 				Wandmaker.Quest.complete();
 
-				builder.append("Wandmaker quest item: ");
+				builder.append(Messages.get(SeedFinder.class, "wandmaker_item") + ": ");
 
 				switch (Wandmaker.Quest.type) {
 					case 1:
 					default:
-						builder.append("corpse dust\n\n");
+						builder.append(Messages.get(SeedFinder.class, "corpse_dust") + "\n\n");
 						break;
 					case 2:
-						builder.append("fresh embers\n\n");
+						builder.append(Messages.get(SeedFinder.class, "fresh_embers") + "\n\n");
 						break;
 					case 3:
-						builder.append("rotberry seed\n\n");
+						builder.append(Messages.get(SeedFinder.class, "rotberry_seed") + "\n\n");
 				}
 
-				addTextQuest("Wandmaker quest rewards", rewards, builder);
+				addTextQuest(Messages.get(SeedFinder.class, "wandmaker_rewards"), rewards, builder);
 			}
 
 			if (Blacksmith.Quest.type != 0) {
-				builder.append("Blacksmith quest: ");
+				builder.append(Messages.get(SeedFinder.class, "blacksmith_quest") + ": ");
 				switch (Blacksmith.Quest.type) {
 					case 0:
-						builder.append("old (pre-2.3)");
+						builder.append(Messages.get(SeedFinder.class, "blacksmith_old"));
 						break;
 					case 1:
-						builder.append("crystal cave");
+						builder.append(Messages.get(SeedFinder.class, "blacksmith_crystal"));
 						break;
 					case 2:
-						builder.append("gnoll geomancer");
+						builder.append(Messages.get(SeedFinder.class, "blacksmith_gnoll"));
 						break;
 					case 3:
-						builder.append("fungus monster");
+						builder.append(Messages.get(SeedFinder.class, "blacksmith_fungus"));
 						break;
 				}
 				builder.append("\n\n");
@@ -743,7 +744,7 @@ public class SeedFinder {
 				rewards.add(Imp.Quest.reward.identify());
 				Imp.Quest.complete();
 
-				addTextQuest("Imp quest reward", rewards, builder);
+				addTextQuest(Messages.get(SeedFinder.class, "imp_reward"), rewards, builder);
 			}
 
 			heaps.addAll(getMobDrops(l));
@@ -775,12 +776,12 @@ public class SeedFinder {
 			}
 
 			if (Options.logEquipment) {
-				addTextItems("Equipment", equipment, builder, "");
+				addTextItems(Messages.get(SeedFinder.class, "equipment"), equipment, builder, "");
 
 				// sacrificial fire
 				if (l.sacrificialFireItem != null) {
 					if (equipment.size() == 0) {
-						builder.append("Equipment:\n");
+						builder.append(Messages.get(SeedFinder.class, "equipment") + ":\n");
 					}
 					Item fireItem = l.sacrificialFireItem.identify();
 
@@ -790,7 +791,7 @@ public class SeedFinder {
 						tabstring += Options.spacingChar;
 					}
 
-					builder.append("- " + fireItem.title().toLowerCase() + tabstring + "(sacrificial fire)");
+					builder.append("- " + fireItem.title().toLowerCase() + tabstring + "(" + Messages.get(SeedFinder.class, "sacrificial_fire") + ")");
 					builder.append("\n\n");
 				} else {
 					builder.append("\n");
@@ -798,17 +799,17 @@ public class SeedFinder {
 			}
 
 			if (Options.logScrolls)
-				addTextItems("Scrolls", scrolls, builder, "\n");
+				addTextItems(Messages.get(SeedFinder.class, "scrolls"), scrolls, builder, "\n");
 			if (Options.logPotions)
-				addTextItems("Potions", potions, builder, "\n");
+				addTextItems(Messages.get(SeedFinder.class, "potions"), potions, builder, "\n");
 			if (Options.logRings)
-				addTextItems("Rings", rings, builder, "\n");
+				addTextItems(Messages.get(SeedFinder.class, "rings"), rings, builder, "\n");
 			if (Options.logWands)
-				addTextItems("Wands", wands, builder, "\n");
+				addTextItems(Messages.get(SeedFinder.class, "wands"), wands, builder, "\n");
 			if (Options.logArtifacts)
-				addTextItems("Artifacts", artifacts, builder, "\n");
+				addTextItems(Messages.get(SeedFinder.class, "artifacts"), artifacts, builder, "\n");
 			if (Options.logOther)
-				addTextItems("Other", others, builder, "\n");
+				addTextItems(Messages.get(SeedFinder.class, "other"), others, builder, "\n");
 
 			log[i] += (builder.toString());
 

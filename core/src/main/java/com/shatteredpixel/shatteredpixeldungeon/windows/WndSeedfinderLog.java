@@ -23,8 +23,10 @@ package com.shatteredpixel.shatteredpixeldungeon.windows;
 
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
 import com.watabou.input.PointerEvent;
+import com.watabou.noosa.ColorBlock;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.PointerArea;
 
@@ -42,6 +44,8 @@ public class WndSeedfinderLog extends WndTabbedCategories {
 
 	private ArrayList<RenderedTextBlock> item_texts = new ArrayList<>();
 	private ArrayList<RenderedTextBlock> room_texts = new ArrayList<>();
+	private LabeledTab floorTab;
+	private final int floorCount;
 
 	private enum Category {ITEMS, ROOMS;}
 	private Category selected_category = Category.ITEMS;
@@ -52,6 +56,12 @@ public class WndSeedfinderLog extends WndTabbedCategories {
 		super();
 
 		int width = WIDTH_MIN;
+		floorCount = seedfinder_result.main.length;
+
+		ColorBlock backdrop = new ColorBlock(PixelScene.uiCamera.width, PixelScene.uiCamera.height, 0xFF000000);
+		backdrop.camera = PixelScene.uiCamera;
+		addToBack(backdrop);
+
 
 		PointerArea blocker = new PointerArea(0, 0, PixelScene.uiCamera.width, PixelScene.uiCamera.height);
 		//do not go back on screen click
@@ -83,20 +93,26 @@ public class WndSeedfinderLog extends WndTabbedCategories {
 				largest = textblock_room;
 			}
 
-			final int finalI = i;
-			add(new LabeledTab(numToNumeral(finalI + 1)) {
-				@Override
-				protected void select(boolean value) {
-					super.select(value);
-					if(value) {
-						selected_index = finalI;
-					}
-					update_text_visibility();
-				}
-			});
 		}
 
-		add_category(new LabeledTab("items") {
+		add(new LabeledTab("<") {
+			@Override
+			protected void onClick() {
+				changeFloor(-1);
+			}
+		});
+
+		floorTab = new LabeledTab(Messages.get(WndSeedfinderLog.class, "floor", 1, floorCount));
+		add(floorTab);
+
+		add(new LabeledTab(">") {
+			@Override
+			protected void onClick() {
+				changeFloor(1);
+			}
+		});
+
+		add_category(new LabeledTab(Messages.get(WndSeedfinderLog.class, "items")) {
 			@Override
 			protected void select(boolean value) {
 				super.select(value);
@@ -107,7 +123,7 @@ public class WndSeedfinderLog extends WndTabbedCategories {
 			}
 		});
 
-		add_category(new LabeledTab("rooms") {
+		add_category(new LabeledTab(Messages.get(WndSeedfinderLog.class, "rooms")) {
 			@Override
 			protected void select(boolean value) {
 				super.select(value);
@@ -115,6 +131,13 @@ public class WndSeedfinderLog extends WndTabbedCategories {
 					selected_category = Category.ROOMS;
 				}
 				update_text_visibility();
+			}
+		});
+
+		add_category(new LabeledTab(Messages.get(WndSeedfinderLog.class, "back")) {
+			@Override
+			protected void onClick() {
+				hide();
 			}
 		});
 
@@ -139,8 +162,22 @@ public class WndSeedfinderLog extends WndTabbedCategories {
 		resize(width, (int) largest.bottom() + 2);
 
 		layoutTabs();
-		select(0);
+		select(1);
 
+	}
+
+	private void changeFloor(int amount) {
+		int next = Math.max(0, Math.min(floorCount - 1, selected_index + amount));
+		if (next != selected_index) {
+			selected_index = next;
+			floorTab.label(Messages.get(WndSeedfinderLog.class, "floor", selected_index + 1, floorCount));
+			update_text_visibility();
+		}
+	}
+
+	@Override
+	public void onBackPressed() {
+		hide();
 	}
 
 	private void update_text_visibility() {
@@ -159,8 +196,4 @@ public class WndSeedfinderLog extends WndTabbedCategories {
 		}
 	}
 
-	private String numToNumeral(int num) {
-		return Integer.toString(num);
-
-	}
 }

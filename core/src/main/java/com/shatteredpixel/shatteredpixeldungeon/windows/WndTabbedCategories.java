@@ -277,6 +277,11 @@ public class WndTabbedCategories extends Window {
 			PixelScene.align(btLabel);
 		}
 
+		protected void label(String label) {
+			btLabel.text(label);
+			layout();
+		}
+
 		@Override
 		protected void select( boolean value ) {
 			super.select( value );

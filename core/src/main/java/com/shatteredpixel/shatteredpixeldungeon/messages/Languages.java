@@ -104,6 +104,13 @@ public enum Languages {
 	}
 
 	public static Languages matchCode(String code){
+		if (code != null) {
+			for (Languages language : values()) {
+				if (language.code.equalsIgnoreCase(code)) {
+					return language;
+				}
+			}
+		}
 		return ENGLISH;
 	}
 

@@ -145,7 +145,7 @@ public class TitleScene extends PixelScene {
 
 									ShatteredPixelDungeon.scene().addToFront(
 											new WndSeedfinderLog(Icons.get(Icons.BACKPACK),
-													"Items for seed " + DungeonSeed.convertToCode(Dungeon.seed),
+													Messages.get(TitleScene.class, "scout_result_title", DungeonSeed.convertToCode(Dungeon.seed)),
 													result));
 								} else {
 									SPDSettings.seedinputText("");
@@ -195,7 +195,7 @@ public class TitleScene extends PixelScene {
 
 											if (foundSeed == null || foundSeed.startsWith("error")) {
 												ShatteredPixelDungeon.scene().addToFront(new com.shatteredpixel.shatteredpixeldungeon.windows.WndMessage(
-														foundSeed != null ? foundSeed : "Error: seed not found."));
+														foundSeed != null ? foundSeed.substring("error:".length()).trim() : Messages.get(TitleScene.class, "seedfinder_not_found")));
 												return;
 											}
 
@@ -209,7 +209,7 @@ public class TitleScene extends PixelScene {
 
 											ShatteredPixelDungeon.scene().addToFront(
 													new WndSeedfinderLog(Icons.get(Icons.BACKPACK),
-															"Found seed " + DungeonSeed.convertToCode(Dungeon.seed),
+															Messages.get(TitleScene.class, "seedfinder_result_title", DungeonSeed.convertToCode(Dungeon.seed)),
 															result));
 										});
 									});
@@ -269,7 +269,7 @@ public class TitleScene extends PixelScene {
 
 				ShatteredPixelDungeon.scene().addToFront(
 						new WndSeedfinderLog(Icons.get(Icons.BACKPACK),
-								"Items for daily run " + date,
+								Messages.get(TitleScene.class, "daily_result_title", date),
 								result));
 			}
 		};

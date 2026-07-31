@@ -392,15 +392,15 @@ public class Heap implements Bundlable {
 			case REMAINS:
 				return Messages.get(this, "remains");
 			case MIMIC:
-				return "mimic";
+				return Messages.get(this, "mimic");
 			case GOLDEN_MIMIC:
-				return "golden mimic";
+				return Messages.get(this, "golden_mimic");
 			case CRYSTAL_MIMIC:
-				return "crystal mimic";
+				return Messages.get(this, "crystal_mimic");
 			case STATUE:
-				return "statue";
+				return Messages.get(this, "statue");
 			case TrinketCatalyst:
-				return "magical catalyst";
+				return Messages.get(this, "trinket_catalyst");
 			default:
 				return peek().title().toLowerCase();
 		}
