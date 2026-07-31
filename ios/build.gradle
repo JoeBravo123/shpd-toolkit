@@ -25,7 +25,10 @@ task updateRoboVMProps(){
     //parse out just #.#.# from version name, this is an apple requirement
     props.setProperty ('appShortVersionName', (appVersionName =~ /\d+\.\d+\.\d+/)[0])
 
-    props.setProperty ('appMainclass', appPackageName + ".ios.IOSLauncher")
+    // The iOS launcher keeps the upstream Shattered Pixel Dungeon package.
+    // appPackageName is the toolkit's application/bundle namespace and does not
+    // match the Java package that contains IOSLauncher.
+    props.setProperty ('appMainclass', 'com.shatteredpixel.shatteredpixeldungeon.ios.IOSLauncher')
     props.setProperty ('appExecutable', "IOSLauncher")
 
     file("robovm.properties").withWriter { props.store(it, "Dynamically generated, do not commit to version control!") }

@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -404,13 +405,28 @@ public class SeedFinder {
 		return heaps;
 	}
 
-	private boolean testSeed(String seed, int floors) throws InterruptedException {
-		SPDSettings.customSeed(seed);
-		Dungeon.initSeed();
-		SPDSettings.challenges(Options.challenges);
+	private void initializeRun(String seed) {
 		Dungeon.daily = Options.searchForDaily;
+
+		if (Dungeon.daily) {
+			long day = 1000L * 60 * 60 * 24;
+			long dailyTimestamp = day * ((long) Math.floor(Game.realTime / day) + Options.DailyOffset);
+			Dungeon.seed = dailyTimestamp + DungeonSeed.TOTAL_SEEDS;
+
+			DateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT);
+			format.setTimeZone(TimeZone.getTimeZone("UTC"));
+			Dungeon.customSeedText = format.format(new Date(dailyTimestamp));
+		} else {
+			Dungeon.customSeedText = seed;
+			Dungeon.seed = DungeonSeed.convertFromText(seed);
+		}
+
 		GamesInProgress.selectedClass = HeroClass.WARRIOR;
-		Dungeon.init();
+		Dungeon.init(Options.challenges);
+	}
+
+	private boolean testSeed(String seed, int floors) throws InterruptedException {
+		initializeRun(seed);
 
 		boolean[] itemsFound = new boolean[itemList.size()];
 
@@ -550,26 +566,7 @@ public class SeedFinder {
 			log_roomsonly[i] = "";
 		}
 
-		if (Options.searchForDaily) {
-			Dungeon.daily = true;
-			Dungeon.initSeed();
-			long DAY = 1000 * 60 * 60 * 24;
-			long currentDay = (long) Math.floor(Game.realTime / DAY) + Options.DailyOffset;
-			SPDSettings.lastDaily(DAY * currentDay);
-			SPDSettings.challenges(Options.challenges);
-			DateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT);
-			format.setTimeZone(TimeZone.getTimeZone("UTC"));
-
-			GamesInProgress.selectedClass = HeroClass.WARRIOR;
-			Dungeon.init();
-		} else {
-			Dungeon.daily = false;
-			SPDSettings.customSeed(seed);
-			Dungeon.initSeed();
-			SPDSettings.challenges(Options.challenges);
-			GamesInProgress.selectedClass = HeroClass.WARRIOR;
-			Dungeon.init();
-		}
+		initializeRun(seed);
 
 		if (!Options.ignoreBlacklist) {
 			blacklist = Arrays.asList(Gold.class, Dewdrop.class, IronKey.class, GoldenKey.class, CrystalKey.class,

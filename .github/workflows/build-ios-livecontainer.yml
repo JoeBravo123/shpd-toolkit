@@ -1,0 +1,50 @@
+name: Build iOS IPA for LiveContainer
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - agent/ios-livecontainer
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-livecontainer-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build unsigned arm64 IPA
+    runs-on: macos-15
+    timeout-minutes: 90
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Restore RoboVM cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.robovm/cache
+          key: robovm-${{ runner.os }}-${{ hashFiles('build.gradle', 'gradle.properties', 'gradle/wrapper/gradle-wrapper.properties', 'ios/build.gradle', 'ios/robovm.xml') }}
+          restore-keys: |
+            robovm-${{ runner.os }}-
+
+      - name: Build unsigned IPA
+        run: ./gradlew ios:createIPA -Probovm.archs=arm64 -Probovm.iosSkipSigning=true --stacktrace --no-daemon
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v6
+        with:
+          name: shpd-toolkit-ios-livecontainer
+          path: ios/build/robovm/**/*.ipa
+          if-no-files-found: error
+          retention-days: 7

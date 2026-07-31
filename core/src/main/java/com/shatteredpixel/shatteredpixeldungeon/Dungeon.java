@@ -231,9 +231,15 @@ public class Dungeon {
 	}
 	
 	public static void init() {
+		init(SPDSettings.challenges());
+	}
+
+	// Lets tools initialize an isolated generated run without persisting their
+	// temporary challenge selection into the player's preferences.
+	static void init(int activeChallenges) {
 
 		initialVersion = version = Game.versionCode;
-		challenges = SPDSettings.challenges();
+		challenges = activeChallenges;
 		mobsToChampion = 1;
 
 		Actor.clear();
