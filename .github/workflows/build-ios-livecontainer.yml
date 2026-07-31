@@ -2,6 +2,9 @@ name: Build iOS IPA for LiveContainer
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - agent/ios-ui-localization
 
 permissions:
   contents: read
