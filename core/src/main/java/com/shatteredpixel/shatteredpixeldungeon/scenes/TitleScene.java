@@ -22,7 +22,6 @@
 package com.shatteredpixel.shatteredpixeldungeon.scenes;
 
 import com.shatteredpixel.shatteredpixeldungeon.SeedFinder;
-import com.shatteredpixel.shatteredpixeldungeon.SeedFinder.Options;
 import com.shatteredpixel.shatteredpixeldungeon.SeedFinder.SeedfinderLogResult;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.utils.Clipboard;
@@ -61,11 +60,6 @@ import com.watabou.noosa.audio.Music;
 import com.watabou.utils.ColorMath;
 import com.watabou.utils.DeviceCompat;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
 
 public class TitleScene extends PixelScene {
 
@@ -260,12 +254,7 @@ public class TitleScene extends PixelScene {
 			protected void onClick() {
 				SeedfinderLogResult result = new SeedFinder().logSeedItemsDailyRunRun(0);
 
-			long DAY = 1000 * 60 * 60 * 24;
-			long currentDay = (long) Math.floor(Game.realTime / DAY) + Options.DailyOffset;
-			SPDSettings.lastDaily(DAY * currentDay);
-			DateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT);
-			format.setTimeZone(TimeZone.getTimeZone("UTC"));
-			String date = format.format(new Date(SPDSettings.lastDaily()));
+				String date = Dungeon.customSeedText;
 
 				ShatteredPixelDungeon.scene().addToFront(
 						new WndSeedfinderLog(Icons.get(Icons.BACKPACK),

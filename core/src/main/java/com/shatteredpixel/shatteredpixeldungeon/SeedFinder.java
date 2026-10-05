@@ -425,6 +425,8 @@ public class SeedFinder {
 
 		GamesInProgress.selectedClass = HeroClass.WARRIOR;
 		Dungeon.init(Options.challenges);
+		// The 4.0 quest reset leaves these populated until its room spawns again.
+		Imp.Quest.rewardOptions.clear();
 	}
 
 	private boolean testSeed(String seed, int floors) throws InterruptedException {
@@ -513,23 +515,22 @@ public class SeedFinder {
 		}
 
 		// check quests
-		Item[] questitems = {
+		ArrayList<Item> questitems = new ArrayList<>(Arrays.asList(
 				Ghost.Quest.armor,
 				Ghost.Quest.weapon,
 				Wandmaker.Quest.wand1,
-				Wandmaker.Quest.wand2,
-				Imp.Quest.reward
-		};
+				Wandmaker.Quest.wand2));
+		questitems.addAll(Imp.Quest.rewardOptions);
 
 		if (Ghost.Quest.armor != null) {
-			questitems[0] = Ghost.Quest.armor.inscribe(Ghost.Quest.glyph);
-			questitems[1] = Ghost.Quest.weapon.enchant(Ghost.Quest.enchant);
+			questitems.set(0, Ghost.Quest.armor.inscribe(Ghost.Quest.glyph));
+			questitems.set(1, Ghost.Quest.weapon.enchant(Ghost.Quest.enchant));
 		}
 
-		for (int k = 0; k < 5; k++) {
+		for (int k = 0; k < questitems.size(); k++) {
 			for (int j = 0; j < itemList.size(); j++) {
-				if (questitems[k] != null) {
-					if (questitems[k].identify().title().toLowerCase().contains(itemList.get(j))) {
+				if (questitems.get(k) != null) {
+					if (questitems.get(k).identify().title().toLowerCase().contains(itemList.get(j))) {
 						if (!itemsFound[j]) {
 							itemsFound[j] = true;
 							break;
@@ -584,6 +585,8 @@ public class SeedFinder {
 			addTextItems(Messages.get(SeedFinder.class, "trinkets"), trinkets, builder, "\n");
 			log[0] += builder.toString();
 		}
+
+		boolean impRewardsLogged = false;
 
 		for (int i = 0; i < floors; i++) {
 
@@ -739,12 +742,15 @@ public class SeedFinder {
 				Blacksmith.Quest.type = 0;
 			}
 
-			if (Imp.Quest.reward != null) {
+			// In 4.0 the vault's six rewards are generated when the Imp room spawns.
+			// Report them once, without simulating quest completion or a vault score.
+			if (!impRewardsLogged && !Imp.Quest.rewardOptions.isEmpty()) {
 				ArrayList<Item> rewards = new ArrayList<>();
-				rewards.add(Imp.Quest.reward.identify());
-				Imp.Quest.complete();
-
+				for (Item reward : Imp.Quest.rewardOptions) {
+					rewards.add(reward.identify());
+				}
 				addTextQuest(Messages.get(SeedFinder.class, "imp_reward"), rewards, builder);
+				impRewardsLogged = true;
 			}
 
 			heaps.addAll(getMobDrops(l));
