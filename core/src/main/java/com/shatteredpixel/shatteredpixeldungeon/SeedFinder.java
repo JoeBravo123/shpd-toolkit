@@ -59,6 +59,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.RegularLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SecretRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SecretWellRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.MagicWellRoom;
 import com.shatteredpixel.shatteredpixeldungeon.plants.BlandfruitBush;
@@ -299,6 +300,15 @@ public class SeedFinder {
 		}
 
 		return "error: " + Messages.get(SeedFinder.class, "invalid_mode");
+	}
+
+	// Use the same generated room list as the Rooms tab, rather than map feeling.
+	private int countSecretRooms() {
+		int count = 0;
+		for (Room room : RegularLevel.roomList) {
+			if (room instanceof SecretRoom) count++;
+		}
+		return count;
 	}
 
 	private ArrayList<String> getRooms() {
@@ -702,6 +712,15 @@ public class SeedFinder {
 			}
 
 			log[i] += Messages.get(SeedFinder.class, "floor", Dungeon.depth, feeling) + "\n\n";
+
+			// Highlight secret rooms on the Items tab as well as listing them on the Rooms tab.
+			// Room count is taken from the generated rooms, never inferred from floor feeling.
+			if (Dungeon.depth % 5 != 0 && Dungeon.depth < 26) {
+				int secretRooms = countSecretRooms();
+				if (secretRooms > 0) {
+					log[i] += Messages.get(SeedFinder.class, "secret_rooms", secretRooms) + "\n\n";
+				}
+			}
 
 			// list all rooms of level
 			if (Dungeon.depth % 5 != 0 && Dungeon.depth < 26) {

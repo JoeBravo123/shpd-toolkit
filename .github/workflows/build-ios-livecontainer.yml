@@ -2,6 +2,11 @@ name: Build iOS IPA for LiveContainer
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - seedfinder
+    paths:
+      - 'core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/SeedFinder.java'
 
 permissions:
   contents: read
@@ -34,6 +39,9 @@ jobs:
           key: robovm-${{ runner.os }}-${{ hashFiles('build.gradle', 'gradle.properties', 'gradle/wrapper/gradle-wrapper.properties', 'ios/build.gradle', 'ios/robovm.xml') }}
           restore-keys: |
             robovm-${{ runner.os }}-
+
+      - name: Compile and run core tests
+        run: ./gradlew :core:compileJava :ios:compileJava :core:test --stacktrace --no-daemon
 
       - name: Build unsigned IPA
         run: ./gradlew ios:createIPA -Probovm.archs=arm64 -Probovm.iosSkipSigning=true --stacktrace --no-daemon
