@@ -61,6 +61,7 @@ public class SPDSettings extends GameSettings {
 	public static final String KEY_LOGWANDS= "logging_option_wands";
 	public static final String KEY_LOGARTIFACTS	= "logging_option_artifacts";
 	public static final String KEY_LOGMISC= "logging_option_other";
+	public static final String KEY_LOGEXPANDED = "logging_option_expanded";
 
 	public static final String KEY_SEEDITEMS_TEXT= "remember_seeditems_text";
 	public static final String KEY_SEEDINPUT_TEXT= "remember_seedinput_text";
@@ -173,6 +174,14 @@ public class SPDSettings extends GameSettings {
 	
 	public static boolean logMisc() {
 		return getBoolean( KEY_LOGMISC, false );
+	}
+
+	public static void logExpanded(boolean value) {
+		put(KEY_LOGEXPANDED, value);
+	}
+
+	public static boolean logExpanded() {
+		return getBoolean(KEY_LOGEXPANDED, true);
 	}
 
 	public static void seedfinderFontSize( int value ) {

@@ -305,6 +305,7 @@ public class WndSettings extends WndTabbed {
 						CheckBox chkWands;
 						CheckBox chkArtifacts;
 						CheckBox chkMisc;
+						CheckBox chkExpanded;
 
 						ColorBlock sep2;
 						ColorBlock sep3;
@@ -398,6 +399,16 @@ public class WndSettings extends WndTabbed {
 							chkMisc.checked(SPDSettings.logMisc());
 							add(chkMisc);
 
+							chkExpanded = new CheckBox(Messages.get(WndSettings.SeedfinderTab.this, "expanded")) {
+								@Override
+								protected void onClick() {
+									super.onClick();
+									SPDSettings.logExpanded(checked());
+								}
+							};
+							chkExpanded.checked(SPDSettings.logExpanded());
+							add(chkExpanded);
+
 							sep3 = new ColorBlock(1, 1, 0xFF000000);
 							add(sep3);
 
@@ -438,9 +449,10 @@ public class WndSettings extends WndTabbed {
 							chkWands.setRect(0, chkRings.bottom() + GAP, width, BTN_HEIGHT);
 							chkArtifacts.setRect(0, chkWands.bottom() + GAP, width, BTN_HEIGHT);
 							chkMisc.setRect(0, chkArtifacts.bottom() + GAP, width, BTN_HEIGHT);
+							chkExpanded.setRect(0, chkMisc.bottom() + GAP, width, BTN_HEIGHT);
 
 							sep3.size(width, 1);
-							sep3.y = chkMisc.bottom() + GAP;
+							sep3.y = chkExpanded.bottom() + GAP;
 
 							chkRooms.setRect(0, sep3.y + 1 + GAP, width, BTN_HEIGHT);
 							chkBlacklist.setRect(0, chkRooms.bottom() + GAP, width, BTN_HEIGHT);

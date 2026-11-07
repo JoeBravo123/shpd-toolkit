@@ -33,7 +33,11 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap.Type;
+import com.shatteredpixel.shatteredpixeldungeon.items.Honeypot;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb;
+import com.shatteredpixel.shatteredpixeldungeon.items.food.Blandfruit;
+import com.shatteredpixel.shatteredpixeldungeon.items.food.Food;
 import com.shatteredpixel.shatteredpixeldungeon.items.journal.Guidebook;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.CrystalKey;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.GoldenKey;
@@ -45,16 +49,20 @@ import com.shatteredpixel.shatteredpixeldungeon.items.quest.Embers;
 import com.shatteredpixel.shatteredpixeldungeon.items.quest.Pickaxe;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
+import com.shatteredpixel.shatteredpixeldungeon.items.stones.Runestone;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.Trinket;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.TrinketCatalyst;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.RegularLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SecretWellRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.MagicWellRoom;
+import com.shatteredpixel.shatteredpixeldungeon.plants.BlandfruitBush;
+import com.shatteredpixel.shatteredpixeldungeon.plants.Plant;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.utils.DungeonSeed;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndMessage;
@@ -87,6 +95,7 @@ public class SeedFinder {
 		public static boolean logWands;
 		public static boolean logArtifacts;
 		public static boolean logOther;
+		public static boolean logExpanded;
 
 		public static boolean trueRandom;
 		public static boolean sequentialMode;
@@ -98,10 +107,16 @@ public class SeedFinder {
 	public class HeapItem {
 		public Item item;
 		public Heap heap;
+		public String source;
 
 		public HeapItem(Item item, Heap heap) {
+			this(item, heap, null);
+		}
+
+		public HeapItem(Item item, Heap heap, String source) {
 			this.item = item;
 			this.heap = heap;
+			this.source = source;
 		}
 
 		public String name() {
@@ -132,6 +147,7 @@ public class SeedFinder {
 		Options.logWands = SPDSettings.logWands();
 		Options.logArtifacts = SPDSettings.logArtifacts();
 		Options.logOther = SPDSettings.logMisc();
+		Options.logExpanded = SPDSettings.logExpanded();
 
 		Options.ignoreBlacklist = SPDSettings.ignoreBlacklist();
 		Options.challenges = SPDSettings.challenges();
@@ -218,6 +234,9 @@ public class SeedFinder {
 
 						builder.append(tabstring + "(" + h.title().toLowerCase() + ")");
 					}
+				}
+				if (item.source != null) {
+					builder.append(" (" + item.source + ")");
 				}
 				builder.append("\n");
 			}
@@ -366,6 +385,21 @@ public class SeedFinder {
 		return trinkets;
 	}
 
+	// Blandfruit bushes drop fruit only when activated, not during level generation.
+	// Report their obtainable fruit without changing the generated level or RNG.
+	private ArrayList<HeapItem> getPlantDrops(Level level) {
+		ArrayList<HeapItem> drops = new ArrayList<>();
+		for (Plant plant : level.plants.valueList()) {
+			if (plant instanceof BlandfruitBush) {
+				Heap heap = new Heap();
+				heap.type = Type.HEAP;
+				drops.add(new HeapItem(new Blandfruit(), heap,
+					Messages.get(SeedFinder.class, "blandfruit_bush")));
+			}
+		}
+		return drops;
+	}
+
 	private ArrayList<Heap> getMobDrops(Level l) {
 		ArrayList<Heap> heaps = new ArrayList<>();
 
@@ -499,6 +533,17 @@ public class SeedFinder {
 				}
 			}
 
+			// Keep searching consistent with items listed in seed analysis.
+			for (HeapItem drop : getPlantDrops(l)) {
+				Item item = drop.item;
+				for (int j = 0; j < itemList.size(); j++) {
+					if (item.title().toLowerCase().contains(itemList.get(j))
+						|| item.anonymousName().toLowerCase().contains(itemList.get(j))) {
+						itemsFound[j] = true;
+					}
+				}
+			}
+
 			// check sacrificial fire
 			if (l.sacrificialFireItem != null) {
 				for (int j = 0; j < itemList.size(); j++) {
@@ -600,6 +645,10 @@ public class SeedFinder {
 			ArrayList<HeapItem> artifacts = new ArrayList<>();
 			ArrayList<HeapItem> wands = new ArrayList<>();
 			ArrayList<HeapItem> others = new ArrayList<>();
+			ArrayList<HeapItem> missiles = new ArrayList<>();
+			ArrayList<HeapItem> runestones = new ArrayList<>();
+			ArrayList<HeapItem> foods = new ArrayList<>();
+			ArrayList<HeapItem> supplies = new ArrayList<>();
 
 			String feeling = l.feeling.toString();
 
@@ -770,6 +819,14 @@ public class SeedFinder {
 						potions.add(new HeapItem(item, h));
 					else if (item instanceof MeleeWeapon || item instanceof Armor)
 						equipment.add(new HeapItem(item, h));
+					else if (item instanceof MissileWeapon)
+						missiles.add(new HeapItem(item, h));
+					else if (item instanceof Runestone)
+						runestones.add(new HeapItem(item, h));
+					else if (item instanceof Food)
+						foods.add(new HeapItem(item, h));
+					else if (item instanceof Honeypot || item instanceof Honeypot.ShatteredPot || item instanceof Bomb)
+						supplies.add(new HeapItem(item, h));
 					else if (item instanceof Ring)
 						rings.add(new HeapItem(item, h));
 					else if (item instanceof Wand)
@@ -780,6 +837,8 @@ public class SeedFinder {
 						others.add(new HeapItem(item, h));
 				}
 			}
+
+			foods.addAll(getPlantDrops(l));
 
 			if (Options.logEquipment) {
 				addTextItems(Messages.get(SeedFinder.class, "equipment"), equipment, builder, "");
@@ -814,6 +873,12 @@ public class SeedFinder {
 				addTextItems(Messages.get(SeedFinder.class, "wands"), wands, builder, "\n");
 			if (Options.logArtifacts)
 				addTextItems(Messages.get(SeedFinder.class, "artifacts"), artifacts, builder, "\n");
+			if (Options.logExpanded) {
+				addTextItems(Messages.get(SeedFinder.class, "missiles"), missiles, builder, "\n");
+				addTextItems(Messages.get(SeedFinder.class, "runestones"), runestones, builder, "\n");
+				addTextItems(Messages.get(SeedFinder.class, "food"), foods, builder, "\n");
+				addTextItems(Messages.get(SeedFinder.class, "supplies"), supplies, builder, "\n");
+			}
 			if (Options.logOther)
 				addTextItems(Messages.get(SeedFinder.class, "other"), others, builder, "\n");
 
