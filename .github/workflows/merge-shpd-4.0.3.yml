@@ -46,6 +46,7 @@ jobs:
       - name: Repair four merge-induced source incompatibilities
         shell: bash
         run: |
+          python3 - <<'PY'
           from pathlib import Path
           
           root = Path("core/src/main/java/com/shatteredpixel/shatteredpixeldungeon")
@@ -82,6 +83,7 @@ jobs:
           s = s.replace(old, replacement)
           backup.write_text(s)
           print("Applied Catalog, Settings and backup compatibility fixes")
+          PY
       - name: Compile core and iOS source, run core tests
         run: ./gradlew :core:compileJava :ios:compileJava :core:test --stacktrace --no-daemon
       - name: Commit and push only after validation
