@@ -22,7 +22,6 @@
 package com.shatteredpixel.shatteredpixeldungeon.journal;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
-import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.items.Amulet;
 import com.shatteredpixel.shatteredpixeldungeon.items.Ankh;
 import com.shatteredpixel.shatteredpixeldungeon.items.ArcaneResin;
@@ -34,7 +33,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.watabou.utils.Bundle;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -214,7 +212,7 @@ public enum Catalog {
 		if (bundle.contains(CATALOG_ITEMS)) {
 			List<Class> seenClasses = new ArrayList<>();
 			if (bundle.contains(CATALOG_ITEMS)) {
-				seenClasses = Arrays.asList(bundle.getClassArray(CATALOG_ITEMS));
+				seenClasses = java.util.Arrays.asList(bundle.getClassArray(CATALOG_ITEMS));
 			}
 
 			for (Catalog cat : values()) {
@@ -226,5 +224,13 @@ public enum Catalog {
 			}
 		}
 	}
+
+    public static void unload() {
+        for (Catalog cat : values()) {
+            for (Class<? extends Item> item : cat.seen.keySet()) {
+                cat.seen.put(item, false);
+            }
+        }
+    }
 
 }

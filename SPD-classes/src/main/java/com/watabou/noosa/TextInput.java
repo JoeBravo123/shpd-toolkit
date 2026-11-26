@@ -139,8 +139,7 @@ public class TextInput extends Component {
 			});
 		}
 
-		textField.setOnscreenKeyboard(new TextField.OnscreenKeyboard() {
-			@Override
+		textField.setOnscreenKeyboard(new TextField.DefaultOnscreenKeyboard() {
 			public void show(boolean visible) {
 				Gdx.input.setOnscreenKeyboardVisible(visible, Input.OnscreenKeyboardType.Email);
 			}
@@ -261,6 +260,7 @@ public class TextInput extends Component {
 			Game.inputHandler.removeInputProcessor(stage);
 			Game.platform.setOnscreenKeyboardVisible(false, false);
 			if (!DeviceCompat.isDesktop()) Game.platform.updateSystemUI();
+			Script.unuse();
 		}
 	}
 }
