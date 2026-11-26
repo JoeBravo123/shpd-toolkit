@@ -1,0 +1,89 @@
+name: Publish verified Toolkit 4.0.3-1.8
+on:
+  push:
+    branches:
+      - release/4.0.3-1.8-publish
+    paths:
+      - .github/workflows/publish-4.0.3-1.8.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: publish-toolkit-4.0.3-1.8
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN: '45833560973'
+      SOURCE_SHA: e48dfbbcecce5d23caf18e6261b1fd8b1d3863e7
+      TAG: v4.0.3-toolkit-1.8
+    steps:
+      - name: Download verified build
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh run view "$SOURCE_RUN" -R "$GITHUB_REPOSITORY" --json headSha,conclusion,status --jq '.headSha + " " + .conclusion + " " + .status' | grep -Fx "$SOURCE_SHA success completed"
+          gh run download "$SOURCE_RUN" -R "$GITHUB_REPOSITORY" -n shpd-toolkit-ios-livecontainer -D incoming
+      - name: Verify and prepare release files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          python3 - <<'PY'
+          from pathlib import Path
+          import plistlib, zipfile, shutil, hashlib, struct
+          files = list(Path('incoming').rglob('*.ipa'))
+          assert len(files) == 1, files
+          src = files[0]
+          with zipfile.ZipFile(src) as z:
+              assert z.testzip() is None, 'Corrupt IPA'
+              plists = [p for p in z.namelist() if p.startswith('Payload/') and p.endswith('.app/Info.plist') and p.count('/') == 2]
+              assert len(plists) == 1, plists
+              p = plists[0]
+              info = plistlib.loads(z.read(p))
+              print('Bundle metadata:', {k: info.get(k) for k in ('CFBundleIdentifier','CFBundleShortVersionString','CFBundleVersion','CFBundleVersionString','MinimumOSVersion')})
+              assert info['CFBundleShortVersionString'] == '4.0.3', info['CFBundleShortVersionString']
+              assert str(info['CFBundleVersion']) == '932', info['CFBundleVersion']
+              executable = p.rsplit('/',1)[0] + '/' + info['CFBundleExecutable']
+              with z.open(executable) as exe:
+                  header = exe.read(8)
+              assert header[:4] == bytes.fromhex('cffaedfe') and struct.unpack('<I',header[4:8])[0] == 0x0100000c, 'Expected thin arm64 Mach-O'
+          dst = Path('dist/shpd-toolkit-4.0.3-livecontainer.ipa')
+          shutil.copyfile(src, dst)
+          with dst.open('rb') as f:
+              digest = hashlib.file_digest(f, 'sha256').hexdigest()
+          Path('dist/SHA256SUMS.txt').write_text(f'{digest}  {dst.name}\n')
+          print(digest, dst.name)
+          PY
+      - name: Publish release
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release already exists; refusing to overwrite"
+            exit 1
+          fi
+          cat > notes.md <<'EOF'
+          ## SHPD Toolkit 4.0.3 - 1.8
+
+          ### 更新内容
+          - 适配 SHPD 4.0.3，保留种子分析与种子搜索功能。
+          - 房间名称汉化、快速楼层选择、楼层记忆。
+          - 全局深色现代主题，统一窗口和按钮样式。
+          - 修复 iPhone 灵动岛与底部手势区域遮挡，使用原生安全区。
+          - 保留原有 iOS LiveContainer 定制。
+
+          ### 下载与安装
+          下载 IPA 并导入 LiveContainer。此为 unsigned arm64 IPA，不含 App Store 签名。
+          SHA256SUMS.txt 提供文件校验值。
+
+          ### 构建与验证
+          - 源码提交：e48dfbbcecce5d23caf18e6261b1fd8b1d3863e7
+          - [GitHub Actions 构建](https://github.com/JoeBravo123/shpd-toolkit/actions/runs/45833560973)：Java 编译、Core 测试、iOS IPA 构建通过。
+          - 发布使用该次构建的原始 IPA，发布流程检查 IPA 完整性、版本号及 arm64 架构。
+          - 最新主题与安全区的实机验证状态未明确记录；Android 未验证。
+          EOF
+          gh release create "$TAG" dist/shpd-toolkit-4.0.3-livecontainer.ipa dist/SHA256SUMS.txt -R "$GITHUB_REPOSITORY" --target "$SOURCE_SHA" --title "SHPD Toolkit 4.0.3 - 1.8 · iOS LiveContainer" --notes-file notes.md --latest
