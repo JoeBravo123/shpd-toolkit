@@ -625,6 +625,7 @@ public class SeedFinder {
 		}
 
 		initializeRun(seed);
+		result.seed = Dungeon.seed;
 
 		if (!Options.ignoreBlacklist) {
 			blacklist = Arrays.asList(Gold.class, Dewdrop.class, IronKey.class, GoldenKey.class, CrystalKey.class,
@@ -925,6 +926,7 @@ public class SeedFinder {
 	}
 
 	public class SeedfinderLogResult {
+		public long seed;
 		public String[] main;
 		public String[] rooms;
 	}

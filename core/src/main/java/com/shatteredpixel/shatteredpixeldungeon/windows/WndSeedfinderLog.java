@@ -21,179 +21,202 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
-import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
+import com.shatteredpixel.shatteredpixeldungeon.Chrome;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
+import com.shatteredpixel.shatteredpixeldungeon.SeedFinder.SeedfinderLogResult;
+import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
-import com.watabou.input.PointerEvent;
+import com.shatteredpixel.shatteredpixeldungeon.ui.ScrollPane;
+import com.shatteredpixel.shatteredpixeldungeon.ui.StyledButton;
+import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 import com.watabou.noosa.ColorBlock;
+import com.watabou.noosa.Game;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.PointerArea;
+import com.watabou.noosa.ui.Component;
+import com.watabou.utils.PlatformSupport;
+import com.watabou.utils.RectF;
 
-import com.shatteredpixel.shatteredpixeldungeon.SeedFinder;
-import com.shatteredpixel.shatteredpixeldungeon.SeedFinder.SeedfinderLogResult;
+public class WndSeedfinderLog extends Window {
 
-import java.util.ArrayList;
+    private static final int GAP = 2;
+    private static final int BUTTON_HEIGHT = 19;
+    private final SeedfinderLogResult result;
+    private final int floorCount;
+    private int selectedIndex;
+    private boolean rooms;
+    private final int textWidth;
 
-public class WndSeedfinderLog extends WndTabbedCategories {
+    private final RenderedTextBlock floorLabel;
+    private final RenderedTextBlock body;
+    private final ScrollPane scroll;
+    private final StyledButton previous;
+    private final StyledButton floorButton;
+    private final StyledButton next;
+    private final StyledButton roomButton;
 
-	protected static final int WIDTH_MIN = 120;
-	protected static final int WIDTH_MAX = 280;
-	protected static final int GAP = 1;
-	private final int text_size = SPDSettings.seedfinderFontSize();
+    public WndSeedfinderLog(Image icon, String title, SeedfinderLogResult result) {
+        super();
+        this.result = result;
+        floorCount = result.main.length;
+        selectedIndex = SPDSettings.seedfinderLastFloor(result.seed, floorCount) - 1;
 
-	private ArrayList<RenderedTextBlock> item_texts = new ArrayList<>();
-	private ArrayList<RenderedTextBlock> room_texts = new ArrayList<>();
-	private LabeledTab floorTab;
-	private final int floorCount;
+        ColorBlock backdrop = new ColorBlock(PixelScene.uiCamera.width, PixelScene.uiCamera.height, 0xFF000000);
+        backdrop.camera = PixelScene.uiCamera;
+        addToBack(backdrop);
 
-	private enum Category {ITEMS, ROOMS;}
-	private Category selected_category = Category.ITEMS;
-	private int selected_index = 0;
+        // Preserve the original result window's resistance to accidental outside taps.
+        PointerArea outsideBlocker = new PointerArea(0, 0, PixelScene.uiCamera.width, PixelScene.uiCamera.height);
+        outsideBlocker.camera = PixelScene.uiCamera;
+        add(outsideBlocker);
 
-	public WndSeedfinderLog(Image icon, String title, SeedfinderLogResult seedfinder_result) {
+        RectF insets = Game.platform.getSafeInsets(PlatformSupport.INSET_BLK);
+        int availableWidth = (int)((Game.width - insets.left - insets.right) / PixelScene.defaultZoom);
+        int availableHeight = (int)((Game.height - insets.top - insets.bottom) / PixelScene.defaultZoom);
+        int w = Math.min(PixelScene.landscape() ? 220 : 140,
+                availableWidth - chrome.marginHor() - 4);
+        int h = Math.min(PixelScene.landscape() ? 180 : 260,
+                availableHeight - chrome.marginVer() - 4);
+        resize(w, h);
+        textWidth = w - 3;
 
-		super();
+        IconTitle titlebar = new IconTitle(icon, title);
+        titlebar.setRect(0, 0, w, 0);
+        add(titlebar);
 
-		int width = WIDTH_MIN;
-		floorCount = seedfinder_result.main.length;
+        float headerY = titlebar.bottom() + GAP;
+        roomButton = new StyledButton(Chrome.Type.GREY_BUTTON, message("rooms"), 7) {
+            @Override
+            protected void onClick() {
+                rooms = !rooms;
+                refresh();
+            }
+        };
+        float toggleWidth = Math.max(36, roomButton.reqWidth() + 6);
+        roomButton.setRect(w - toggleWidth, headerY, toggleWidth, BUTTON_HEIGHT);
+        add(roomButton);
 
-		ColorBlock backdrop = new ColorBlock(PixelScene.uiCamera.width, PixelScene.uiCamera.height, 0xFF000000);
-		backdrop.camera = PixelScene.uiCamera;
-		addToBack(backdrop);
+        floorLabel = PixelScene.renderTextBlock(7);
+        floorLabel.hardlight(TITLE_COLOR);
+        add(floorLabel);
 
+        Component content = new Component();
+        body = PixelScene.renderTextBlock(SPDSettings.seedfinderFontSize());
+        content.add(body);
+        scroll = new ScrollPane(content);
+        add(scroll);
+        float bodyY = headerY + BUTTON_HEIGHT + GAP;
+        float navY = h - BUTTON_HEIGHT;
+        scroll.setRect(0, bodyY, w, Math.max(1, navY - bodyY - GAP));
 
-		PointerArea blocker = new PointerArea(0, 0, PixelScene.uiCamera.width, PixelScene.uiCamera.height);
-		//do not go back on screen click
-		blocker.camera = PixelScene.uiCamera;
-		add(blocker);
+        previous = new StyledButton(Chrome.Type.GREY_BUTTON, "<", 9) {
+            @Override
+            protected void onClick() {
+                setFloor(selectedIndex - 1);
+            }
+        };
+        floorButton = new StyledButton(Chrome.Type.GREY_BUTTON, "", 8) {
+            @Override
+            protected void onClick() {
+                ShatteredPixelDungeon.scene().addToFront(new FloorPicker());
+            }
+        };
+        next = new StyledButton(Chrome.Type.GREY_BUTTON, ">", 9) {
+            @Override
+            protected void onClick() {
+                setFloor(selectedIndex + 1);
+            }
+        };
+        StyledButton back = new StyledButton(Chrome.Type.GREY_BUTTON, message("back"), 7) {
+            @Override
+            protected void onClick() {
+                hide();
+            }
+        };
 
-		IconTitle titlebar = new IconTitle(icon, title);
-		titlebar.setRect(0, 0, width, 0);
-		add(titlebar);
+        float arrowWidth = 20;
+        float backWidth = Math.max(32, back.reqWidth() + 6);
+        float floorWidth = w - 2 * arrowWidth - backWidth - 3 * GAP;
+        previous.setRect(0, navY, arrowWidth, BUTTON_HEIGHT);
+        floorButton.setRect(previous.right() + GAP, navY, floorWidth, BUTTON_HEIGHT);
+        next.setRect(floorButton.right() + GAP, navY, arrowWidth, BUTTON_HEIGHT);
+        back.setRect(next.right() + GAP, navY, backWidth, BUTTON_HEIGHT);
+        add(previous);
+        add(floorButton);
+        add(next);
+        add(back);
 
-		RenderedTextBlock largest = null;
-		for (int i = 0; i < seedfinder_result.main.length; i++) {
-			RenderedTextBlock textblock = PixelScene.renderTextBlock(text_size);
-			textblock.text(seedfinder_result.main[i], width);
-			textblock.setPos(titlebar.left(), titlebar.bottom() + 2 * GAP);
-			add(textblock);
-			item_texts.add(textblock);
+        rememberFloor();
+        refresh();
+    }
 
-			RenderedTextBlock textblock_room = PixelScene.renderTextBlock(text_size);
-			textblock_room.text(seedfinder_result.rooms[i], width);
-			textblock_room.setPos(titlebar.left(), titlebar.bottom() + 2 * GAP);
-			add(textblock_room);
-			room_texts.add(textblock_room);
+    private static String message(String key, Object... args) {
+        return Messages.get(WndSeedfinderLog.class, key, args);
+    }
 
-			if (largest == null || textblock.height() > largest.height()) {
-				largest = textblock;
-			}
-			if (largest == null || textblock_room.height() > largest.height()) {
-				largest = textblock_room;
-			}
+    private void rememberFloor() {
+        SPDSettings.seedfinderRememberFloor(result.seed, selectedIndex + 1);
+    }
 
-		}
+    private void setFloor(int index) {
+        int clamped = Math.max(0, Math.min(floorCount - 1, index));
+        if (clamped != selectedIndex) {
+            selectedIndex = clamped;
+            rememberFloor();
+            refresh();
+        }
+    }
 
-		add(new LabeledTab("<") {
-			@Override
-			protected void onClick() {
-				changeFloor(-1);
-			}
-		});
+    private void refresh() {
+        floorLabel.text(message("current_floor", selectedIndex + 1), (int)roomButton.left() - GAP);
+        floorLabel.setPos(0, roomButton.top() + (BUTTON_HEIGHT - floorLabel.height()) / 2);
+        floorButton.text(message("floor", selectedIndex + 1, floorCount) + " v");
+        roomButton.text(message(rooms ? "items" : "rooms"));
+        previous.enable(selectedIndex > 0);
+        next.enable(selectedIndex + 1 < floorCount);
+        body.text((rooms ? result.rooms : result.main)[selectedIndex], textWidth);
+        body.setPos(0, 0);
+        scroll.content().setSize(scroll.width(), Math.max(1, (int)Math.ceil(body.height())));
+        scroll.setSize(scroll.width(), scroll.height());
+        scroll.scrollTo(0, 0);
+    }
 
-		floorTab = new LabeledTab(Messages.get(WndSeedfinderLog.class, "floor", 1, floorCount));
-		add(floorTab);
+    private class FloorPicker extends Window {
+        FloorPicker() {
+            super();
+            int w = 120;
+            RenderedTextBlock heading = PixelScene.renderTextBlock(message("choose_floor"), 9);
+            heading.hardlight(TITLE_COLOR);
+            heading.maxWidth(w);
+            heading.setPos((w - heading.width()) / 2, 0);
+            add(heading);
 
-		add(new LabeledTab(">") {
-			@Override
-			protected void onClick() {
-				changeFloor(1);
-			}
-		});
-
-		add_category(new LabeledTab(Messages.get(WndSeedfinderLog.class, "items")) {
-			@Override
-			protected void select(boolean value) {
-				super.select(value);
-				if(value) {
-					selected_category = Category.ITEMS;
-				}
-				update_text_visibility();
-			}
-		});
-
-		add_category(new LabeledTab(Messages.get(WndSeedfinderLog.class, "rooms")) {
-			@Override
-			protected void select(boolean value) {
-				super.select(value);
-				if(value) {
-					selected_category = Category.ROOMS;
-				}
-				update_text_visibility();
-			}
-		});
-
-		add_category(new LabeledTab(Messages.get(WndSeedfinderLog.class, "back")) {
-			@Override
-			protected void onClick() {
-				hide();
-			}
-		});
-
-		while (PixelScene.landscape()
-				&& largest.bottom() > (PixelScene.MIN_HEIGHT_L - 20)
-				&& width < WIDTH_MAX) {
-			width += 20;
-			titlebar.setRect(0, 0, width, 0);
-
-			largest = null;
-			for (RenderedTextBlock text : item_texts) {
-				text.setPos(titlebar.left(), titlebar.bottom() + 2 * GAP);
-				text.maxWidth(width);
-				if (largest == null || text.height() > largest.height()) {
-					largest = text;
-				}
-			}
-		}
-
-		bringToFront(titlebar);
-
-		resize(width, (int) largest.bottom() + 2);
-
-		layoutTabs();
-		select(1);
-
-	}
-
-	private void changeFloor(int amount) {
-		int next = Math.max(0, Math.min(floorCount - 1, selected_index + amount));
-		if (next != selected_index) {
-			selected_index = next;
-			floorTab.label(Messages.get(WndSeedfinderLog.class, "floor", selected_index + 1, floorCount));
-			update_text_visibility();
-		}
-	}
-
-	@Override
-	public void onBackPressed() {
-		hide();
-	}
-
-	private void update_text_visibility() {
-		for (int i = 0; i < item_texts.size(); i++) {
-			item_texts.get(i).visible = false;
-			room_texts.get(i).visible = false;
-		}
-
-		switch(selected_category) {
-			case ITEMS:
-				item_texts.get(selected_index).visible = true;
-				break;
-			case ROOMS:
-				room_texts.get(selected_index).visible = true;
-				break;
-		}
-	}
-
+            float startY = heading.bottom() + GAP;
+            float cellWidth = (w - 4 * GAP) / 5f;
+            int rows = (floorCount + 4) / 5;
+            for (int i = 0; i < floorCount; i++) {
+                final int index = i;
+                StyledButton button = new StyledButton(
+                        i == selectedIndex ? Chrome.Type.RED_BUTTON : Chrome.Type.GREY_BUTTON,
+                        Integer.toString(i + 1), 8) {
+                    @Override
+                    protected void onClick() {
+                        hide();
+                        setFloor(index);
+                    }
+                };
+                if (i == selectedIndex) {
+                    button.textColor(TITLE_COLOR);
+                } else if ((i + 1) % 5 == 0) {
+                    button.textColor(0xFFAA66);
+                }
+                button.setRect((i % 5) * (cellWidth + GAP),
+                        startY + (i / 5) * (BUTTON_HEIGHT + GAP), cellWidth, BUTTON_HEIGHT);
+                add(button);
+            }
+            resize(w, (int)Math.ceil(startY + rows * (BUTTON_HEIGHT + GAP) - GAP));
+        }
+    }
 }

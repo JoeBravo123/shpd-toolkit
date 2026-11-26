@@ -68,6 +68,27 @@ public class SPDSettings extends GameSettings {
 	public static final String KEY_CONDITION= "seedfinder_condition";
 
 	public static final String KEY_FONTSIZE= "seedfinder_fontsize";
+	private static final String KEY_SEEDFINDER_LAST_POSITION = "seedfinder_last_position";
+
+	public static int seedfinderLastFloor(long seed, int floorCount) {
+		String prefix = Long.toString(seed) + ":";
+		String position = getString(KEY_SEEDFINDER_LAST_POSITION, "");
+		if (position != null && position.startsWith(prefix)) {
+			try {
+				return Math.max(1, Math.min(floorCount, Integer.parseInt(position.substring(prefix.length()))));
+			} catch (NumberFormatException ignored) {
+				// Invalid or older preference: start on the first floor.
+			}
+		}
+		return 1;
+	}
+
+	public static void seedfinderRememberFloor(long seed, int floor) {
+		String position = Long.toString(seed) + ":" + Math.max(1, floor);
+		if (!position.equals(getString(KEY_SEEDFINDER_LAST_POSITION, ""))) {
+			put(KEY_SEEDFINDER_LAST_POSITION, position);
+		}
+	}
 
 	public static void seedfinderFloors( int value ) {
 		put( KEY_FLOORS, value );

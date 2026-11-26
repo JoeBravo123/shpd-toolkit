@@ -5,8 +5,14 @@ on:
   push:
     branches:
       - seedfinder
+      - feature/shpd-4.0.3
     paths:
       - 'core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/SeedFinder.java'
+      - 'core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/windows/WndSeedfinderLog.java'
+      - 'core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/SPDSettings.java'
+      - 'core/src/main/assets/messages/**'
+      - 'build.gradle'
+      - '.github/workflows/build-ios-livecontainer.yml'
 
 permissions:
   contents: read
