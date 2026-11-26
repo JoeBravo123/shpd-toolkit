@@ -38,6 +38,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.GameLog;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.shatteredpixel.shatteredpixeldungeon.ui.OptionSlider;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RedButton;
+import com.shatteredpixel.shatteredpixeldungeon.ui.StyledButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Toolbar;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
@@ -237,8 +238,8 @@ public class WndSettings extends WndTabbed {
 		ColorBlock sep1;
 		OptionSlider numFloors;
 		RedButton btnLoggingSettings;
-		RedButton btnChallenges;
-		RedButton btnMode;
+		StyledButton btnChallenges;
+		StyledButton btnMode;
 		OptionSlider fontSize;
 
 		@Override
@@ -291,7 +292,7 @@ public class WndSettings extends WndTabbed {
 			fontSize.setSelectedValue(SPDSettings.seedfinderFontSize());
 			add(fontSize);
 
-			sep1 = new ColorBlock(1, 1, 0xFF000000);
+			sep1 = new ColorBlock(1, 1, 0xFF727865);
 			add(sep1);
 
 			btnLoggingSettings = new RedButton(Messages.get(this, "logoptions_button"), 9) {
@@ -319,7 +320,7 @@ public class WndSettings extends WndTabbed {
 							barDesc = PixelScene.renderTextBlock(Messages.get(WndSettings.SeedfinderTab.this, "logging_options"), 6);
 							add(barDesc);
 
-							sep2 = new ColorBlock(1, 1, 0xFF000000);
+							sep2 = new ColorBlock(1, 1, 0xFF727865);
 							add(sep2);
 
 							chkTrinkets = new CheckBox(Messages.get(WndSettings.SeedfinderTab.this, "trinkets")){
@@ -412,7 +413,7 @@ public class WndSettings extends WndTabbed {
 							chkExpanded.checked(SPDSettings.logExpanded());
 							add(chkExpanded);
 
-							sep3 = new ColorBlock(1, 1, 0xFF000000);
+							sep3 = new ColorBlock(1, 1, 0xFF727865);
 							add(sep3);
 
 							chkRooms = new CheckBox(Messages.get(WndSettings.SeedfinderTab.this, "use_rooms")){
@@ -468,7 +469,7 @@ public class WndSettings extends WndTabbed {
 			};
 			add(btnLoggingSettings);
 
-			btnChallenges = new RedButton(Messages.get(WndSettings.SeedfinderTab.this, "challenges")){
+			btnChallenges = new StyledButton(Chrome.Type.GREY_BUTTON, Messages.get(WndSettings.SeedfinderTab.this, "challenges")){
 				@Override
 				protected void onClick() {
 					ShatteredPixelDungeon.scene().addToFront(new WndChallenges(SPDSettings.challenges(), true) {
@@ -494,7 +495,7 @@ public class WndSettings extends WndTabbed {
 			add(btnChallenges);
 
 			String modeBtnDescKey = SPDSettings.seedfinderConditionANY() ? "mode_any" : "mode_all";
-			btnMode = new RedButton(Messages.get(WndSettings.SeedfinderTab.this, modeBtnDescKey)){
+			btnMode = new StyledButton(Chrome.Type.GREY_BUTTON, Messages.get(WndSettings.SeedfinderTab.this, modeBtnDescKey)){
 				@Override
 				protected void onClick() {
 					SPDSettings.seedfinderConditionANY(!SPDSettings.seedfinderConditionANY());
@@ -528,13 +529,13 @@ public class WndSettings extends WndTabbed {
 
 			numFloors.setRect(0, bottom + GAP, width, SLIDER_HEIGHT);
 
-			btnLoggingSettings.setRect(0, numFloors.bottom() + GAP, width, BTN_HEIGHT);
+			fontSize.setRect(0, numFloors.bottom() + 2 * GAP, width, SLIDER_HEIGHT);
 
-			btnChallenges.setRect(0, btnLoggingSettings.bottom() + GAP, width / 2 - 1, BTN_HEIGHT);
-			btnMode.setRect(width/2 + 1, btnLoggingSettings.bottom() + GAP, width / 2, BTN_HEIGHT);
-			fontSize.setRect(0, btnMode.bottom() + GAP, width, SLIDER_HEIGHT);
+			btnLoggingSettings.setRect(0, fontSize.bottom() + 3 * GAP, width, BTN_HEIGHT + 2);
+			btnChallenges.setRect(0, btnLoggingSettings.bottom() + 2 * GAP, width / 2 - 1, BTN_HEIGHT + 2);
+			btnMode.setRect(width/2 + 1, btnLoggingSettings.bottom() + 2 * GAP, width / 2 - 1, BTN_HEIGHT + 2);
 
-			height = fontSize.bottom();
+			height = btnMode.bottom();
 		}
 	}
 

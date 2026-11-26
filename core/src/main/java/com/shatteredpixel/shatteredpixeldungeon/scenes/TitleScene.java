@@ -85,7 +85,7 @@ public class TitleScene extends PixelScene {
 		Image title = BannerSprites.get( landscape() ? BannerSprites.Type.TITLE_LAND : BannerSprites.Type.TITLE_PORT);
 		add( title );
 
-		float topRegion = Math.max(title.height - 6, h*0.45f);
+		float topRegion = Math.max(title.height - 6, h*0.39f);
 
 		title.x = (w - title.width()) / 2f;
 		title.y = 2 + (topRegion - title.height()) / 2f;
@@ -116,7 +116,7 @@ public class TitleScene extends PixelScene {
 
 		final Chrome.Type GREY_TR = Chrome.Type.GREY_BUTTON_TR;
 
-		StyledButton btnScout = new StyledButton(GREY_TR, Messages.get(TitleScene.class, "scout_seed_button")) {
+		StyledButton btnScout = new StyledButton(Chrome.Type.RED_BUTTON, Messages.get(TitleScene.class, "scout_seed_button")) {
 			@Override
 			protected void onClick() {
 				ShatteredPixelDungeon.scene()
@@ -153,7 +153,8 @@ public class TitleScene extends PixelScene {
 						});
 			}
 		};
-		btnScout.icon(Icons.get(Icons.ENTER));
+		btnScout.icon(Icons.get(Icons.SEED));
+		btnScout.textColor(Window.TITLE_COLOR);
 		add(btnScout);
 
 		StyledButton btnSeedfinder = new StyledButton(GREY_TR, Messages.get(this, "seedfinder_button")){
@@ -262,7 +263,7 @@ public class TitleScene extends PixelScene {
 								result));
 			}
 		};
-		btnScoutDaily.icon(Icons.get(Icons.ENTER));
+		btnScoutDaily.icon(Icons.get(Icons.CALENDAR));
 		add(btnScoutDaily);
 		Dungeon.daily = Dungeon.dailyReplay = false;
 
@@ -297,41 +298,44 @@ public class TitleScene extends PixelScene {
 				ShatteredPixelDungeon.switchScene( AboutScene.class );
 			}
 		};
-		btnAbout.icon(Icons.get(Icons.NEWS));
+		btnAbout.icon(Icons.get(Icons.INFO));
 		add(btnAbout);
 
-		final int BTN_HEIGHT = 20;
-		int GAP = (int)(h - topRegion - (landscape() ? 3 : 4)*BTN_HEIGHT)/3;
-		GAP /= landscape() ? 3 : 5;
-		GAP = Math.max(GAP, 2);
-
-		float buttonAreaWidth = landscape() ? PixelScene.MIN_WIDTH_L-6 : PixelScene.MIN_WIDTH_P-2;
-		float btnAreaLeft = (Camera.main.width - buttonAreaWidth) / 2f;
+		// Primary tools first, secondary tools arranged in a consistent grid.
+		final int gap = 3;
+		final int rows = landscape() ? 3 : 5;
+		float buttonAreaWidth = Math.min(w - 12, landscape() ? 240 : 170);
+		float left = (w - buttonAreaWidth) / 2f;
+		float half = (buttonAreaWidth - gap) / 2f;
+		float buttonHeight = Math.min(24, (h - topRegion - 12 - rows * gap) / rows);
+		float y = topRegion + gap;
 		if (landscape()) {
-			btnScout.setRect(title.x-50, topRegion+GAP, ((title.width()+100)/2)-1, BTN_HEIGHT);
-			align(btnScout);
-			btnSeedfinder.setRect(btnScout.right()+2, btnScout.top(), btnScout.width(), BTN_HEIGHT);
-			btnScoutDaily.setRect(btnScout.left(), btnScout.bottom()+ GAP, (btnScout.width()*.67f)-1, BTN_HEIGHT);
-			btnCatalog.setRect(btnScoutDaily.left(), btnScoutDaily.bottom()+GAP, btnScoutDaily.width(), BTN_HEIGHT);
-			btnSource.setRect(btnScoutDaily.right()+2, btnScoutDaily.top(), btnScoutDaily.width(), BTN_HEIGHT);
-			btnChanges.setRect(btnSource.left(), btnSource.bottom() + GAP, btnScoutDaily.width(), BTN_HEIGHT);
-			btnSettings.setRect(btnSource.right()+2, btnSource.top(), btnScoutDaily.width(), BTN_HEIGHT);
-			btnAbout.setRect(btnSettings.left(), btnSettings.bottom() + GAP, btnScoutDaily.width(), BTN_HEIGHT);
+			btnScout.setRect(left, y, half, buttonHeight);
+			btnSeedfinder.setRect(left + half + gap, y, half, buttonHeight);
+			y += buttonHeight + gap;
+			float third = (buttonAreaWidth - gap * 2) / 3f;
+			StyledButton[] secondary = {btnScoutDaily, btnCatalog, btnSettings, btnSource, btnChanges, btnAbout};
+			for (int i = 0; i < secondary.length; i++) {
+				secondary[i].setRect(left + (i % 3) * (third + gap),
+						y + (i / 3) * (buttonHeight + gap), third, buttonHeight);
+			}
 		} else {
-			btnScout.setRect(title.x, topRegion+GAP, title.width(), BTN_HEIGHT);
-			align(btnScout);
-			btnSeedfinder.setRect(btnScout.left(), btnScout.bottom()+ GAP, btnScout.width(), BTN_HEIGHT);
-			btnScoutDaily.setRect(btnScout.left(), btnSeedfinder.bottom()+ GAP, (btnScout.width()/2)-1, BTN_HEIGHT);
-			btnCatalog.setRect(btnScoutDaily.right()+2, btnScoutDaily.top(), btnScoutDaily.width(), BTN_HEIGHT);
-			btnSource.setRect(btnScoutDaily.left(), btnScoutDaily.bottom()+ GAP, btnScoutDaily.width(), BTN_HEIGHT);
-			btnChanges.setRect(btnSource.right()+2, btnSource.top(), btnSource.width(), BTN_HEIGHT);
-			btnSettings.setRect(btnSource.left(), btnSource.bottom()+GAP, btnScoutDaily.width(), BTN_HEIGHT);
-			btnAbout.setRect(btnSettings.right()+2, btnSettings.top(), btnSettings.width(), BTN_HEIGHT);
+			btnScout.setRect(left, y, buttonAreaWidth, buttonHeight);
+			y += buttonHeight + gap;
+			btnSeedfinder.setRect(left, y, buttonAreaWidth, buttonHeight);
+			y += buttonHeight + gap;
+			StyledButton[] secondary = {btnScoutDaily, btnCatalog, btnSettings, btnChanges, btnSource, btnAbout};
+			for (int i = 0; i < secondary.length; i++) {
+				secondary[i].setRect(left + (i % 2) * (half + gap),
+						y + (i / 2) * (buttonHeight + gap), half, buttonHeight);
+			}
 		}
+		for (StyledButton btn : new StyledButton[]{btnScout, btnSeedfinder, btnScoutDaily, btnCatalog,
+				btnSettings, btnChanges, btnSource, btnAbout}) align(btn);
 
 		BitmapText version = new BitmapText( "v" + Game.version, pixelFont);
 		version.measure();
-		version.hardlight( 0x888888 );
+		version.hardlight( 0xB6B7A7 );
 		version.x = w - version.width() - 4;
 		version.y = h - version.height() - 2;
 		add( version );

@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Chrome;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RedButton;
+import com.shatteredpixel.shatteredpixeldungeon.ui.StyledButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 import com.watabou.input.PointerEvent;
@@ -35,13 +36,13 @@ public class WndSeedfinderSeedinput extends Window {
 
 	private static final int WIDTH = 135;
 	private static final int W_LAND_EXTRA = 220; // extra width is sometimes used in landscape
-	private static final int MARGIN = 1;
-	private static final int BUTTON_HEIGHT = 16;
+	private static final int MARGIN = 2;
+	private static final int BUTTON_HEIGHT = 18;
 
 	protected TextInput textBox;
 
-	protected RedButton btnCopy;
-	protected RedButton btnPaste;
+	protected StyledButton btnCopy;
+	protected StyledButton btnPaste;
 
 	private String lastText;
 
@@ -105,15 +106,15 @@ public class WndSeedfinderSeedinput extends Window {
 		if (multiLine) {
 			inputHeight = 64; // ~8 lines of text
 		} else {
-			inputHeight = 16;
+			inputHeight = BUTTON_HEIGHT;
 		}
 
-		float textBoxWidth = width - 3 * MARGIN - BUTTON_HEIGHT;
+		float textBoxWidth = width - 4 * MARGIN - 2 * BUTTON_HEIGHT;
 
 		add(textBox);
 		textBox.setRect(MARGIN, pos, textBoxWidth, inputHeight);
 
-		btnCopy = new RedButton("") {
+		btnCopy = new StyledButton(Chrome.Type.GREY_BUTTON, "") {
 			@Override
 			protected void onPointerDown() {
 				super.onPointerDown();
@@ -135,7 +136,7 @@ public class WndSeedfinderSeedinput extends Window {
 		btnCopy.icon(Icons.COPY.get());
 		add(btnCopy);
 
-		btnPaste = new RedButton("") {
+		btnPaste = new StyledButton(Chrome.Type.GREY_BUTTON, "") {
 			@Override
 			protected void onPointerDown() {
 				super.onPointerDown();
@@ -163,7 +164,7 @@ public class WndSeedfinderSeedinput extends Window {
 		add(btnPaste);
 
 		btnCopy.setRect(textBoxWidth + 2 * MARGIN, pos, BUTTON_HEIGHT, BUTTON_HEIGHT);
-		btnPaste.setRect(textBoxWidth + 2 * MARGIN, btnCopy.bottom() + MARGIN, BUTTON_HEIGHT, BUTTON_HEIGHT);
+		btnPaste.setRect(btnCopy.right() + MARGIN, pos, BUTTON_HEIGHT, BUTTON_HEIGHT);
 
 		pos += inputHeight + MARGIN;
 
@@ -175,9 +176,9 @@ public class WndSeedfinderSeedinput extends Window {
 			}
 		};
 
-		final RedButton negativeBtn;
+		final StyledButton negativeBtn;
 		if (negTxt != null) {
-			negativeBtn = new RedButton(negTxt) {
+			negativeBtn = new StyledButton(Chrome.Type.GREY_BUTTON, negTxt) {
 				@Override
 				protected void onClick() {
 					onSelect(false, textBox.getText());
@@ -188,11 +189,11 @@ public class WndSeedfinderSeedinput extends Window {
 			negativeBtn = null;
 		}
 
-		float btnWidth = multiLine ? width - 2 * MARGIN : textBoxWidth;
+		float btnWidth = width - 2 * MARGIN;
 		if (negTxt != null) {
-			positiveBtn.setRect(MARGIN, pos, (btnWidth - MARGIN) / 2, BUTTON_HEIGHT);
+			positiveBtn.setRect(MARGIN, pos, (btnWidth - MARGIN) * 0.60f, BUTTON_HEIGHT);
 			add(positiveBtn);
-			negativeBtn.setRect(positiveBtn.right() + MARGIN, pos, (btnWidth - MARGIN) / 2, BUTTON_HEIGHT);
+			negativeBtn.setRect(positiveBtn.right() + MARGIN, pos, (btnWidth - MARGIN) * 0.40f, BUTTON_HEIGHT);
 			add(negativeBtn);
 		} else {
 			positiveBtn.setRect(MARGIN, pos, btnWidth, BUTTON_HEIGHT);

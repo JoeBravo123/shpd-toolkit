@@ -311,6 +311,36 @@ public class SeedFinder {
 		return count;
 	}
 
+	// Display localization is intentionally separate from the existing search strings.
+	private ArrayList<String> getDisplayRooms() {
+		ArrayList<String> rooms = new ArrayList<>();
+		for (Room room : RegularLevel.roomList) {
+			String simple = room.getClass().getSimpleName();
+			String name = Messages.get(SeedFinder.class, "room_name_" + simple.toLowerCase(Locale.ROOT));
+			if (Messages.NO_TEXT_FOUND.equals(name)) {
+				name = simple.replaceAll("([a-z])([A-Z])", "$1 $2").toLowerCase(Locale.ROOT);
+			}
+			String path = room.getClass().getName().toLowerCase(Locale.ROOT);
+			String type = path.contains(".secret.") ? "secret"
+					: path.contains(".special.") ? "special"
+					: path.contains(".quest.") ? "quest"
+					: path.contains("entrance") ? "entrance"
+					: path.contains("exit") ? "exit" : "standard";
+			if (room instanceof MagicWellRoom || room instanceof SecretWellRoom) {
+				if (room.generatedWellWater == WaterOfAwareness.class) {
+					name += " (" + Messages.get(SeedFinder.class, "well_awareness") + ")";
+				} else if (room.generatedWellWater == WaterOfHealth.class) {
+					name += " (" + Messages.get(SeedFinder.class, "well_health") + ")";
+				} else {
+					name += " (?)";
+				}
+			}
+			rooms.add(name + "  [" + Messages.get(SeedFinder.class, "room_" + type) + "]");
+		}
+		Collections.sort(rooms);
+		return rooms;
+	}
+
 	private ArrayList<String> getRooms() {
 		ArrayList<String> rooms = new ArrayList<String>();
 		for (int k = 0; k < RegularLevel.roomList.size(); k++) {
@@ -725,7 +755,7 @@ public class SeedFinder {
 
 			// list all rooms of level
 			if (Dungeon.depth % 5 != 0 && Dungeon.depth < 26) {
-				ArrayList<String> rooms = getRooms();
+				ArrayList<String> rooms = getDisplayRooms();
 				log_roomsonly[i] += (Messages.get(SeedFinder.class, "rooms") + ": \n");
 
 				for (int k = 0; k < rooms.size(); k++) {

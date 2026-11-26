@@ -34,7 +34,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 import com.watabou.noosa.ColorBlock;
 import com.watabou.noosa.Game;
 import com.watabou.noosa.Image;
-import com.watabou.noosa.PointerArea;
+import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.watabou.noosa.ui.Component;
 import com.watabou.utils.PlatformSupport;
 import com.watabou.utils.RectF;
@@ -63,38 +63,28 @@ public class WndSeedfinderLog extends Window {
         floorCount = result.main.length;
         selectedIndex = SPDSettings.seedfinderLastFloor(result.seed, floorCount) - 1;
 
-        ColorBlock backdrop = new ColorBlock(PixelScene.uiCamera.width, PixelScene.uiCamera.height, 0xFF000000);
-        backdrop.camera = PixelScene.uiCamera;
-        addToBack(backdrop);
-
-        // Preserve the original result window's resistance to accidental outside taps.
-        PointerArea outsideBlocker = new PointerArea(0, 0, PixelScene.uiCamera.width, PixelScene.uiCamera.height);
-        outsideBlocker.camera = PixelScene.uiCamera;
-        add(outsideBlocker);
-
         RectF insets = Game.platform.getSafeInsets(PlatformSupport.INSET_BLK);
         int availableWidth = (int)((Game.width - insets.left - insets.right) / PixelScene.defaultZoom);
         int availableHeight = (int)((Game.height - insets.top - insets.bottom) / PixelScene.defaultZoom);
-        int w = Math.min(PixelScene.landscape() ? 220 : 140,
+        int w = Math.min(PixelScene.landscape() ? 260 : 180,
                 availableWidth - chrome.marginHor() - 4);
-        int h = Math.min(PixelScene.landscape() ? 180 : 260,
-                availableHeight - chrome.marginVer() - 4);
+        int h = availableHeight - chrome.marginVer() - 4;
         resize(w, h);
-        textWidth = w - 3;
+        textWidth = w - 8;
 
         IconTitle titlebar = new IconTitle(icon, title);
-        titlebar.setRect(0, 0, w, 0);
+        titlebar.setRect(2, 1, w - 4, 0);
         add(titlebar);
 
-        float headerY = titlebar.bottom() + GAP;
-        roomButton = new StyledButton(Chrome.Type.GREY_BUTTON, message("rooms"), 7) {
+        float headerY = titlebar.bottom() + 5;
+        roomButton = new StyledButton(Chrome.Type.GREY_BUTTON_TR, message("rooms"), 7) {
             @Override
             protected void onClick() {
                 rooms = !rooms;
                 refresh();
             }
         };
-        float toggleWidth = Math.max(36, roomButton.reqWidth() + 6);
+        float toggleWidth = Math.max(36, Math.min(w / 2f, roomButton.reqWidth() + 14));
         roomButton.setRect(w - toggleWidth, headerY, toggleWidth, BUTTON_HEIGHT);
         add(roomButton);
 
@@ -107,23 +97,25 @@ public class WndSeedfinderLog extends Window {
         content.add(body);
         scroll = new ScrollPane(content);
         add(scroll);
-        float bodyY = headerY + BUTTON_HEIGHT + GAP;
+        float bodyY = headerY + BUTTON_HEIGHT + 5;
         float navY = h - BUTTON_HEIGHT;
-        scroll.setRect(0, bodyY, w, Math.max(1, navY - bodyY - GAP));
+        scroll.setRect(3, bodyY, w - 6, Math.max(1, navY - bodyY - 4));
+        separator(2, bodyY - 3, w - 4);
+        separator(2, navY - 3, w - 4);
 
-        previous = new StyledButton(Chrome.Type.GREY_BUTTON, "<", 9) {
+        previous = new StyledButton(Chrome.Type.GREY_BUTTON, "", 8) {
             @Override
             protected void onClick() {
                 setFloor(selectedIndex - 1);
             }
         };
-        floorButton = new StyledButton(Chrome.Type.GREY_BUTTON, "", 8) {
+        floorButton = new StyledButton(Chrome.Type.RED_BUTTON, "", 7) {
             @Override
             protected void onClick() {
                 ShatteredPixelDungeon.scene().addToFront(new FloorPicker());
             }
         };
-        next = new StyledButton(Chrome.Type.GREY_BUTTON, ">", 9) {
+        next = new StyledButton(Chrome.Type.GREY_BUTTON, "", 8) {
             @Override
             protected void onClick() {
                 setFloor(selectedIndex + 1);
@@ -136,6 +128,9 @@ public class WndSeedfinderLog extends Window {
             }
         };
 
+        previous.icon(Icons.LEFTARROW.get());
+        next.icon(Icons.RIGHTARROW.get());
+        floorButton.textColor(TITLE_COLOR);
         float arrowWidth = 20;
         float backWidth = Math.max(32, back.reqWidth() + 6);
         float floorWidth = w - 2 * arrowWidth - backWidth - 3 * GAP;
@@ -150,6 +145,14 @@ public class WndSeedfinderLog extends Window {
 
         rememberFloor();
         refresh();
+    }
+
+    private void separator(float x, float y, float width) {
+        ColorBlock line = new ColorBlock(1, 1, 0xFF727865);
+        line.x = x;
+        line.y = y;
+        line.size(width, 1);
+        add(line);
     }
 
     private static String message(String key, Object... args) {
@@ -172,11 +175,15 @@ public class WndSeedfinderLog extends Window {
     private void refresh() {
         floorLabel.text(message("current_floor", selectedIndex + 1), (int)roomButton.left() - GAP);
         floorLabel.setPos(0, roomButton.top() + (BUTTON_HEIGHT - floorLabel.height()) / 2);
-        floorButton.text(message("floor", selectedIndex + 1, floorCount) + " v");
+        floorButton.text(message("floor_action", selectedIndex + 1, floorCount));
         roomButton.text(message(rooms ? "items" : "rooms"));
         previous.enable(selectedIndex > 0);
         next.enable(selectedIndex + 1 < floorCount);
-        body.text((rooms ? result.rooms : result.main)[selectedIndex], textWidth);
+        String details = (rooms ? result.rooms : result.main)[selectedIndex];
+        if (details == null || details.trim().isEmpty()) details = message("empty");
+        // Highlight section headings, not individual item names or search data.
+        details = details.replaceAll("(?m)^([^\\n-][^\\n:：]{0,24}[:：]) *$", "_$1_");
+        body.text(details, textWidth);
         body.setPos(0, 0);
         scroll.content().setSize(scroll.width(), Math.max(1, (int)Math.ceil(body.height())));
         scroll.setSize(scroll.width(), scroll.height());
@@ -186,14 +193,14 @@ public class WndSeedfinderLog extends Window {
     private class FloorPicker extends Window {
         FloorPicker() {
             super();
-            int w = 120;
+            int w = Math.min(145, WndSeedfinderLog.this.width);
             RenderedTextBlock heading = PixelScene.renderTextBlock(message("choose_floor"), 9);
             heading.hardlight(TITLE_COLOR);
             heading.maxWidth(w);
             heading.setPos((w - heading.width()) / 2, 0);
             add(heading);
 
-            float startY = heading.bottom() + GAP;
+            float startY = heading.bottom() + 5;
             float cellWidth = (w - 4 * GAP) / 5f;
             int rows = (floorCount + 4) / 5;
             for (int i = 0; i < floorCount; i++) {
@@ -216,7 +223,14 @@ public class WndSeedfinderLog extends Window {
                         startY + (i / 5) * (BUTTON_HEIGHT + GAP), cellWidth, BUTTON_HEIGHT);
                 add(button);
             }
-            resize(w, (int)Math.ceil(startY + rows * (BUTTON_HEIGHT + GAP) - GAP));
+            float bottom = startY + rows * (BUTTON_HEIGHT + GAP);
+            StyledButton cancel = new StyledButton(Chrome.Type.GREY_BUTTON, message("back"), 7) {
+                @Override
+                protected void onClick() { hide(); }
+            };
+            cancel.setRect(0, bottom, w, BUTTON_HEIGHT);
+            add(cancel);
+            resize(w, (int)Math.ceil(bottom + BUTTON_HEIGHT));
         }
     }
 }
