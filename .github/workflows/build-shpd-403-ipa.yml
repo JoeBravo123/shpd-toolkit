@@ -1,0 +1,40 @@
+name: Verify SHPD 4.0.3 iOS IPA
+on:
+  push:
+    branches:
+      - feature/shpd-4.0.3
+    paths:
+      - .github/workflows/build-shpd-403-ipa.yml
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - name: Check out integration branch
+        uses: actions/checkout@v6
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Restore RoboVM cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.robovm/cache
+          key: robovm-403-${{ runner.os }}-${{ hashFiles('build.gradle', 'gradle.properties', 'gradle/wrapper/gradle-wrapper.properties', 'ios/build.gradle', 'ios/robovm.xml') }}
+          restore-keys: |
+            robovm-${{ runner.os }}-
+      - name: Compile and test
+        run: ./gradlew :core:compileJava :ios:compileJava :core:test --stacktrace --no-daemon
+      - name: Build unsigned arm64 IPA
+        run: ./gradlew ios:createIPA -Probovm.archs=arm64 -Probovm.iosSkipSigning=true --stacktrace --no-daemon
+      - name: Upload unsigned IPA artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: shpd-toolkit-4.0.3-ios-livecontainer
+          path: ios/build/robovm/**/*.ipa
+          if-no-files-found: error
+          retention-days: 7
