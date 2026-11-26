@@ -24,7 +24,7 @@ concurrency:
 jobs:
   build:
     name: Build unsigned arm64 IPA
-    runs-on: macos-15
+    runs-on: macos-15-intel
     timeout-minutes: 90
 
     steps:
@@ -42,9 +42,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.robovm/cache
-          key: robovm-${{ runner.os }}-${{ hashFiles('build.gradle', 'gradle.properties', 'gradle/wrapper/gradle-wrapper.properties', 'ios/build.gradle', 'ios/robovm.xml') }}
+          key: robovm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('build.gradle', 'gradle.properties', 'gradle/wrapper/gradle-wrapper.properties', 'ios/build.gradle', 'ios/robovm.xml') }}
           restore-keys: |
-            robovm-${{ runner.os }}-
+            robovm-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Compile and run core tests
         run: ./gradlew :core:compileJava :ios:compileJava :core:test --stacktrace --no-daemon
