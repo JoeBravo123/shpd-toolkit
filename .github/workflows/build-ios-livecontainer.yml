@@ -11,6 +11,10 @@ on:
       - 'core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/windows/WndSeedfinderLog.java'
       - 'core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/SPDSettings.java'
       - 'core/src/main/assets/messages/**'
+      - 'core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/ui/**'
+      - 'core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/Chrome.java'
+      - 'core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/scenes/TitleScene.java'
+      - 'core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/windows/**'
       - 'build.gradle'
       - '.github/workflows/build-ios-livecontainer.yml'
 

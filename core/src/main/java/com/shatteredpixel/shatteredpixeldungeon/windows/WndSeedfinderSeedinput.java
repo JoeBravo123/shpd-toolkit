@@ -168,7 +168,7 @@ public class WndSeedfinderSeedinput extends Window {
 
 		pos += inputHeight + MARGIN;
 
-		final RedButton positiveBtn = new RedButton(posTxt) {
+		final StyledButton positiveBtn = new StyledButton(Chrome.Type.PRIMARY_BUTTON, posTxt) {
 			@Override
 			protected void onClick() {
 				onSelect(true, textBox.getText());

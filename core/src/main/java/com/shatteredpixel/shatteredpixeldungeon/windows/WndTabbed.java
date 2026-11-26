@@ -35,6 +35,7 @@ import com.watabou.noosa.Image;
 import com.watabou.noosa.NinePatch;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.RectF;
+import com.shatteredpixel.shatteredpixeldungeon.ui.ToolkitTheme;
 import com.watabou.utils.Signal;
 
 import java.util.ArrayList;
@@ -115,9 +116,9 @@ public class WndTabbed extends Window {
 			height + chrome.marginVer() );
 		
 		camera.resize( (int)chrome.width, chrome.marginTop() + height + tabHeight() );
-		camera.x = (int)(Game.width - camera.screenWidth()) / 2;
-		camera.y = (int)(Game.height - camera.screenHeight()) / 2;
-		camera.y += yOffset * camera.zoom;
+		RectF insets = ToolkitTheme.safeInsets();
+		camera.x = (int)(insets.left + (Game.width - insets.left - insets.right - camera.screenWidth()) / 2 + xOffset * camera.zoom);
+		camera.y = (int)(insets.top + (Game.height - insets.top - insets.bottom - camera.screenHeight()) / 2 + yOffset * camera.zoom);
 
 		shadow.boxRect(
 				camera.x / camera.zoom,

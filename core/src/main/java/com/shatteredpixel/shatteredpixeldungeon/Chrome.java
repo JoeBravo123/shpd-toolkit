@@ -22,6 +22,7 @@
 package com.shatteredpixel.shatteredpixeldungeon;
 
 import com.watabou.noosa.NinePatch;
+import com.shatteredpixel.shatteredpixeldungeon.ui.ToolkitTheme;
 
 public class Chrome {
 
@@ -33,6 +34,7 @@ public class Chrome {
 		WINDOW,
 		WINDOW_SILVER,
 		RED_BUTTON,
+		PRIMARY_BUTTON,
 		GREY_BUTTON,
 		GREY_BUTTON_TR,
 		TAG,
@@ -48,22 +50,24 @@ public class Chrome {
 		String Asset = Assets.Interfaces.CHROME;
 		switch (type) {
 		case WINDOW:
-			return new NinePatch( Asset, 0, 0, 20, 20, 6 );
+			return ToolkitTheme.patch("window", 20, 20, 6, 6, 6, 6, 4, 0xFF202833, 0xFF3A4858);
 		case WINDOW_SILVER:
-			return new NinePatch( Asset, 86, 0, 22, 22, 7 );
+			return ToolkitTheme.patch("silver", 22, 22, 7, 7, 7, 7, 4, 0xFF25313E, 0xFF566779);
 		case TOAST:
-			return new NinePatch( Asset, 20, 0, 9, 9, 4 );
+			return ToolkitTheme.patch("toast", 9, 9, 4, 4, 4, 4, 3, 0xFF273340, 0xFF405166);
 		case TOAST_TR:
 		case GREY_BUTTON_TR:
-			return new NinePatch( Asset, 20, 9, 9, 9, 4 );
+			return ToolkitTheme.patch("quiet", 9, 9, 4, 4, 4, 4, 3, 0xFF2C3948, 0xFF41536A);
 		case TOAST_TR_HEAVY:
-			return new NinePatch( Asset, 29, 9, 9, 9, 4 );
+			return ToolkitTheme.patch("heavy", 9, 9, 4, 4, 4, 4, 3, 0xFF202833, 0xFF405166);
 		case TOAST_WHITE:
 			return new NinePatch( Asset, 29, 0, 9, 9, 4 );
 		case RED_BUTTON:
-			return new NinePatch( Asset, 38, 0, 6, 6, 2 );
+			return ToolkitTheme.patch("action", 6, 6, 2, 2, 2, 2, 2, 0xFF35465A, 0xFF4A6075);
+		case PRIMARY_BUTTON:
+			return ToolkitTheme.patch("primary", 10, 10, 3, 3, 3, 3, 3, 0xFF28685F, 0xFF408C80);
 		case GREY_BUTTON:
-			return new NinePatch( Asset, 38, 6, 6, 6, 2 );
+			return ToolkitTheme.patch("secondary", 8, 8, 3, 3, 3, 3, 3, 0xFF2D3948, 0xFF435367);
 		case TAG:
 			return new NinePatch( Asset, 22, 18, 16, 14, 3 );
 		case GEM:
@@ -71,11 +75,11 @@ public class Chrome {
 		case SCROLL:
 			return new NinePatch( Asset, 32, 32, 32, 32, 5, 11, 5, 11 );
 		case TAB_SET:
-			return new NinePatch( Asset, 64, 0, 20, 20, 6 );
+			return ToolkitTheme.patch("tabset", 20, 20, 6, 6, 6, 6, 4, 0xFF202833, 0xFF3A4858);
 		case TAB_SELECTED:
-			return new NinePatch( Asset, 65, 22, 8, 13, 3, 7, 3, 5 );
+			return ToolkitTheme.patch("tabactive", 8, 13, 3, 7, 3, 5, 3, 0xFF28685F, 0xFF408C80);
 		case TAB_UNSELECTED:
-			return new NinePatch( Asset, 75, 22, 8, 13, 3, 7, 3, 5 );
+			return ToolkitTheme.patch("tabinactive", 8, 13, 3, 7, 3, 5, 3, 0xFF2D3948, 0xFF435367);
 		case BLANK:
 			return new NinePatch( Asset, 45, 0, 1, 1, 0, 0, 0, 0 );
 		default:

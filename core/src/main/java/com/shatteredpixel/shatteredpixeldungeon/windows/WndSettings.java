@@ -39,6 +39,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.shatteredpixel.shatteredpixeldungeon.ui.OptionSlider;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RedButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.StyledButton;
+import com.shatteredpixel.shatteredpixeldungeon.ui.ToolkitTheme;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Toolbar;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
@@ -292,7 +293,7 @@ public class WndSettings extends WndTabbed {
 			fontSize.setSelectedValue(SPDSettings.seedfinderFontSize());
 			add(fontSize);
 
-			sep1 = new ColorBlock(1, 1, 0xFF727865);
+			sep1 = new ColorBlock(1, 1, ToolkitTheme.DIVIDER);
 			add(sep1);
 
 			btnLoggingSettings = new RedButton(Messages.get(this, "logoptions_button"), 9) {
@@ -320,7 +321,7 @@ public class WndSettings extends WndTabbed {
 							barDesc = PixelScene.renderTextBlock(Messages.get(WndSettings.SeedfinderTab.this, "logging_options"), 6);
 							add(barDesc);
 
-							sep2 = new ColorBlock(1, 1, 0xFF727865);
+							sep2 = new ColorBlock(1, 1, ToolkitTheme.DIVIDER);
 							add(sep2);
 
 							chkTrinkets = new CheckBox(Messages.get(WndSettings.SeedfinderTab.this, "trinkets")){
@@ -413,7 +414,7 @@ public class WndSettings extends WndTabbed {
 							chkExpanded.checked(SPDSettings.logExpanded());
 							add(chkExpanded);
 
-							sep3 = new ColorBlock(1, 1, 0xFF727865);
+							sep3 = new ColorBlock(1, 1, ToolkitTheme.DIVIDER);
 							add(sep3);
 
 							chkRooms = new CheckBox(Messages.get(WndSettings.SeedfinderTab.this, "use_rooms")){

@@ -38,6 +38,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.watabou.noosa.ui.Component;
 import com.watabou.utils.PlatformSupport;
 import com.watabou.utils.RectF;
+import com.shatteredpixel.shatteredpixeldungeon.ui.ToolkitTheme;
 
 public class WndSeedfinderLog extends Window {
 
@@ -63,7 +64,7 @@ public class WndSeedfinderLog extends Window {
         floorCount = result.main.length;
         selectedIndex = SPDSettings.seedfinderLastFloor(result.seed, floorCount) - 1;
 
-        RectF insets = Game.platform.getSafeInsets(PlatformSupport.INSET_BLK);
+        RectF insets = ToolkitTheme.safeInsets();
         int availableWidth = (int)((Game.width - insets.left - insets.right) / PixelScene.defaultZoom);
         int availableHeight = (int)((Game.height - insets.top - insets.bottom) / PixelScene.defaultZoom);
         int w = Math.min(PixelScene.landscape() ? 260 : 180,
@@ -73,7 +74,8 @@ public class WndSeedfinderLog extends Window {
         textWidth = w - 8;
 
         IconTitle titlebar = new IconTitle(icon, title);
-        titlebar.setRect(2, 1, w - 4, 0);
+        titlebar.color(ToolkitTheme.TEXT);
+        titlebar.setRect(2, 2, w - 4, 0);
         add(titlebar);
 
         float headerY = titlebar.bottom() + 5;
@@ -94,6 +96,8 @@ public class WndSeedfinderLog extends Window {
 
         Component content = new Component();
         body = PixelScene.renderTextBlock(SPDSettings.seedfinderFontSize());
+        body.hardlight(ToolkitTheme.TEXT);
+        body.setHightlighting(true, ToolkitTheme.ACCENT);
         content.add(body);
         scroll = new ScrollPane(content);
         add(scroll);
@@ -109,7 +113,7 @@ public class WndSeedfinderLog extends Window {
                 setFloor(selectedIndex - 1);
             }
         };
-        floorButton = new StyledButton(Chrome.Type.RED_BUTTON, "", 7) {
+        floorButton = new StyledButton(Chrome.Type.PRIMARY_BUTTON, "", 7) {
             @Override
             protected void onClick() {
                 ShatteredPixelDungeon.scene().addToFront(new FloorPicker());
@@ -128,9 +132,9 @@ public class WndSeedfinderLog extends Window {
             }
         };
 
-        previous.icon(Icons.LEFTARROW.get());
-        next.icon(Icons.RIGHTARROW.get());
-        floorButton.textColor(TITLE_COLOR);
+        previous.text("<");
+        next.text(">");
+        floorButton.textColor(ToolkitTheme.TEXT);
         float arrowWidth = 20;
         float backWidth = Math.max(32, back.reqWidth() + 6);
         float floorWidth = w - 2 * arrowWidth - backWidth - 3 * GAP;
@@ -148,7 +152,7 @@ public class WndSeedfinderLog extends Window {
     }
 
     private void separator(float x, float y, float width) {
-        ColorBlock line = new ColorBlock(1, 1, 0xFF727865);
+        ColorBlock line = new ColorBlock(1, 1, ToolkitTheme.DIVIDER);
         line.x = x;
         line.y = y;
         line.size(width, 1);
@@ -206,7 +210,7 @@ public class WndSeedfinderLog extends Window {
             for (int i = 0; i < floorCount; i++) {
                 final int index = i;
                 StyledButton button = new StyledButton(
-                        i == selectedIndex ? Chrome.Type.RED_BUTTON : Chrome.Type.GREY_BUTTON,
+                        i == selectedIndex ? Chrome.Type.PRIMARY_BUTTON : Chrome.Type.GREY_BUTTON,
                         Integer.toString(i + 1), 8) {
                     @Override
                     protected void onClick() {
@@ -215,9 +219,9 @@ public class WndSeedfinderLog extends Window {
                     }
                 };
                 if (i == selectedIndex) {
-                    button.textColor(TITLE_COLOR);
+                    button.textColor(ToolkitTheme.TEXT);
                 } else if ((i + 1) % 5 == 0) {
-                    button.textColor(0xFFAA66);
+                    button.textColor(0xE5B77E);
                 }
                 button.setRect((i % 5) * (cellWidth + GAP),
                         startY + (i / 5) * (BUTTON_HEIGHT + GAP), cellWidth, BUTTON_HEIGHT);

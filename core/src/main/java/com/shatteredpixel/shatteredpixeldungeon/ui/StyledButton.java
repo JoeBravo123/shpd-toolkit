@@ -50,6 +50,7 @@ public class StyledButton extends Button {
 		
 		text = PixelScene.renderTextBlock( size );
 		text.text( label );
+		text.hardlight(ToolkitTheme.TEXT);
 		add( text );
 	}
 	
@@ -107,7 +108,7 @@ public class StyledButton extends Button {
 	
 	@Override
 	protected void onPointerUp() {
-		bg.resetColor();
+			bg.resetColor();
 	}
 	
 	public void enable( boolean value ) {

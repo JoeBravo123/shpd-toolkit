@@ -44,6 +44,9 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.ExitButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.shatteredpixel.shatteredpixeldungeon.ui.StyledButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
+import com.shatteredpixel.shatteredpixeldungeon.ui.ToolkitTheme;
+import com.watabou.noosa.ColorBlock;
+import com.watabou.utils.RectF;
 import com.shatteredpixel.shatteredpixeldungeon.utils.DungeonSeed;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndCatalog;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
@@ -78,17 +81,22 @@ public class TitleScene extends PixelScene {
 		int w = Camera.main.width;
 		int h = Camera.main.height;
 
-		Archs archs = new Archs();
-		archs.setSize( w, h );
-		add( archs );
+		add(new ColorBlock(w, h, ToolkitTheme.BACKGROUND));
+		RectF safe = ToolkitTheme.safeInsets();
+		float safeTop = Math.max(0, (safe.top - Camera.main.y) / Camera.main.zoom);
+		float safeBottom = Math.max(0, (safe.bottom + Camera.main.y) / Camera.main.zoom);
+		float safeLeft = Math.max(0, (safe.left - Camera.main.x) / Camera.main.zoom);
+		float safeRight = Math.max(0, (safe.right + Camera.main.x) / Camera.main.zoom);
+		float usableW = w - safeLeft - safeRight;
+		float usableH = h - safeTop - safeBottom;
 
 		Image title = BannerSprites.get( landscape() ? BannerSprites.Type.TITLE_LAND : BannerSprites.Type.TITLE_PORT);
 		add( title );
 
-		float topRegion = Math.max(title.height - 6, h*0.39f);
+		float topRegion = safeTop + Math.max(title.height - 6, usableH*0.39f);
 
-		title.x = (w - title.width()) / 2f;
-		title.y = 2 + (topRegion - title.height()) / 2f;
+		title.x = safeLeft + (usableW - title.width()) / 2f;
+		title.y = safeTop + 2 + (topRegion - safeTop - title.height()) / 2f;
 
 		align(title);
 
@@ -116,7 +124,7 @@ public class TitleScene extends PixelScene {
 
 		final Chrome.Type GREY_TR = Chrome.Type.GREY_BUTTON_TR;
 
-		StyledButton btnScout = new StyledButton(Chrome.Type.RED_BUTTON, Messages.get(TitleScene.class, "scout_seed_button")) {
+		StyledButton btnScout = new StyledButton(Chrome.Type.PRIMARY_BUTTON, Messages.get(TitleScene.class, "scout_seed_button")) {
 			@Override
 			protected void onClick() {
 				ShatteredPixelDungeon.scene()
@@ -154,7 +162,7 @@ public class TitleScene extends PixelScene {
 			}
 		};
 		btnScout.icon(Icons.get(Icons.SEED));
-		btnScout.textColor(Window.TITLE_COLOR);
+		btnScout.textColor(ToolkitTheme.TEXT);
 		add(btnScout);
 
 		StyledButton btnSeedfinder = new StyledButton(GREY_TR, Messages.get(this, "seedfinder_button")){
@@ -304,10 +312,10 @@ public class TitleScene extends PixelScene {
 		// Primary tools first, secondary tools arranged in a consistent grid.
 		final int gap = 3;
 		final int rows = landscape() ? 3 : 5;
-		float buttonAreaWidth = Math.min(w - 12, landscape() ? 240 : 170);
-		float left = (w - buttonAreaWidth) / 2f;
+		float buttonAreaWidth = Math.min(usableW - 12, landscape() ? 240 : 170);
+		float left = safeLeft + (usableW - buttonAreaWidth) / 2f;
 		float half = (buttonAreaWidth - gap) / 2f;
-		float buttonHeight = Math.min(24, (h - topRegion - 12 - rows * gap) / rows);
+		float buttonHeight = Math.min(24, (h - safeBottom - topRegion - 12 - rows * gap) / rows);
 		float y = topRegion + gap;
 		if (landscape()) {
 			btnScout.setRect(left, y, half, buttonHeight);
@@ -336,8 +344,8 @@ public class TitleScene extends PixelScene {
 		BitmapText version = new BitmapText( "v" + Game.version, pixelFont);
 		version.measure();
 		version.hardlight( 0xB6B7A7 );
-		version.x = w - version.width() - 4;
-		version.y = h - version.height() - 2;
+		version.x = w - safeRight - version.width() - 4;
+		version.y = h - safeBottom - version.height() - 2;
 		add( version );
 
 		if (DeviceCompat.isDesktop()) {

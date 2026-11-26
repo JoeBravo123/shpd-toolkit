@@ -51,7 +51,7 @@ public class Window extends Group implements Signal.Listener<KeyEvent> {
 	protected NinePatch chrome;
 
 	public static final int WHITE = 0xFFFFFF;
-	public static final int TITLE_COLOR = 0xFFFF44;
+	public static final int TITLE_COLOR = ToolkitTheme.ACCENT;
 	public static final int SHPX_COLOR = 0x33BB33;
 	
 	public Window() {
@@ -97,7 +97,7 @@ public class Window extends Group implements Signal.Listener<KeyEvent> {
 			height - chrome.y + chrome.marginBottom() );
 		add( chrome );
 
-		RectF insets = Game.platform.getSafeInsets(PlatformSupport.INSET_BLK);
+		RectF insets = ToolkitTheme.safeInsets();
 		int screenW = (int)(Game.width - insets.left - insets.right);
 		int screenH = (int)(Game.height - insets.top - insets.bottom);
 		
@@ -129,7 +129,7 @@ public class Window extends Group implements Signal.Listener<KeyEvent> {
 		
 		camera.resize( (int)chrome.width, (int)chrome.height );
 
-		RectF insets = Game.platform.getSafeInsets(PlatformSupport.INSET_BLK);
+		RectF insets = ToolkitTheme.safeInsets();
 		int screenW = (int)(Game.width - insets.left - insets.right);
 		int screenH = (int)(Game.height - insets.top - insets.bottom);
 
