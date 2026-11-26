@@ -43,6 +43,45 @@ jobs:
             exit 1
           fi
           git status --short
+      - name: Repair four merge-induced source incompatibilities
+        shell: bash
+        run: |
+          from pathlib import Path
+          
+          root = Path("core/src/main/java/com/shatteredpixel/shatteredpixeldungeon")
+          catalog = root / "journal/Catalog.java"
+          s = catalog.read_text()
+          if "seenClasses = Arrays.asList(" in s and "import java.util.Arrays;" not in s:
+              s = s.replace("seenClasses = Arrays.asList(", "seenClasses = java.util.Arrays.asList(")
+          if "public static void unload(" not in s:
+              pos = s.rfind("\n}")
+              assert pos > 0
+              s = s[:pos] + """
+              public static void unload() {
+                  for (Catalog cat : values()) {
+                      for (Class<? extends Item> item : cat.seen.keySet()) {
+                          cat.seen.put(item, false);
+                      }
+                  }
+              }
+          """ + s[pos:]
+          catalog.write_text(s)
+          
+          settings = root / "windows/WndSettings.java"
+          s = settings.read_text()
+          if "NoosaScript.brightness(" in s and "import com.watabou.noosa.NoosaScript;" not in s:
+              assert "import com.watabou.noosa.Game;" in s
+              s = s.replace("import com.watabou.noosa.Game;", "import com.watabou.noosa.Game;\nimport com.watabou.noosa.NoosaScript;")
+          settings.write_text(s)
+          
+          backup = root / "windows/WndAndroidLocalBackupRestore.java"
+          s = backup.read_text()
+          old = 'Messages.get(WndJournal.BadgesTab.class, "title")'
+          replacement = 'Messages.get("windows.wndjournal$badgestab.title")'
+          assert old in s or replacement in s
+          s = s.replace(old, replacement)
+          backup.write_text(s)
+          print("Applied Catalog, Settings and backup compatibility fixes")
       - name: Compile core and iOS source, run core tests
         run: ./gradlew :core:compileJava :ios:compileJava :core:test --stacktrace --no-daemon
       - name: Commit and push only after validation
