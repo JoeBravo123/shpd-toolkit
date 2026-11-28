@@ -124,7 +124,7 @@ public class WndSeedfinderLog extends Window {
             @Override
             protected void onClick() {
                 if (result.vaultMap != null) {
-                    ShatteredPixelDungeon.scene().addToFront(new WndVaultMap(result.vaultMap, width, height));
+                    ShatteredPixelDungeon.scene().addToFront(new WndVaultMap(result.vaultMap, WndSeedfinderLog.this.width, WndSeedfinderLog.this.height));
                 }
             }
         };
