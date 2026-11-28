@@ -59,6 +59,9 @@ public class WndSeedfinderLog extends Window {
     private final StyledButton roomButton;
     private final StyledButton itemsButton;
     private final StyledButton vaultButton;
+    private final StyledButton mapButton;
+    private final float contentTop;
+    private final float contentBottom;
 
     public WndSeedfinderLog(Image icon, String title, SeedfinderLogResult result) {
         super();
@@ -115,6 +118,18 @@ public class WndSeedfinderLog extends Window {
         add(scroll);
         float bodyY = headerY + BUTTON_HEIGHT + 5;
         float navY = h - BUTTON_HEIGHT;
+        contentTop = bodyY;
+        contentBottom = navY - 4;
+        mapButton = new StyledButton(Chrome.Type.PRIMARY_BUTTON, message("vault_map"), 7) {
+            @Override
+            protected void onClick() {
+                if (result.vaultMap != null) {
+                    ShatteredPixelDungeon.scene().addToFront(new WndVaultMap(result.vaultMap, width, height));
+                }
+            }
+        };
+        mapButton.setRect(3, contentTop, w - 6, BUTTON_HEIGHT);
+        add(mapButton);
         scroll.setRect(3, bodyY, w - 6, Math.max(1, navY - bodyY - 4));
         separator(2, bodyY - 3, w - 4);
         separator(2, navY - 3, w - 4);
@@ -224,6 +239,10 @@ public class WndSeedfinderLog extends Window {
         floorButton.text(message("floor_action", selectedIndex + 1, floorCount));
         previous.enable(selectedIndex > 0);
         next.enable(selectedIndex + 1 < floorCount);
+        boolean showMap = mode == 2 && result.vaultMap != null;
+        mapButton.visible = mapButton.active = showMap;
+        float scrollY = contentTop + (showMap ? BUTTON_HEIGHT + GAP : 0);
+        scroll.setRect(3, scrollY, width - 6, Math.max(1, contentBottom - scrollY));
         String details = mode == 2 ? result.vault : (mode == 1 ? result.rooms : result.main)[selectedIndex];
         if (details == null || details.trim().isEmpty()) details = message("empty");
         // Highlight section headings, not individual item names or search data.

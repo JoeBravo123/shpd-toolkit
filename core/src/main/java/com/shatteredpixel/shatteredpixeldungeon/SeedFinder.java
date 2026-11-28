@@ -955,7 +955,7 @@ public class SeedFinder {
 		// Mainline strings are complete before the branch is ever generated.
 		if (impFloor > 0) {
 			result.vaultFloor = impFloor;
-			result.vault = previewVault(result.seed, resolvedSeedText, impFloor);
+			result.vault = previewVault(result.seed, resolvedSeedText, impFloor, result);
 		}
 		return result;
 	}
@@ -984,7 +984,7 @@ public class SeedFinder {
 		items.add(item);
 	}
 
-	private String previewVault(long seed, String seedText, int impFloor) {
+	private String previewVault(long seed, String seedText, int impFloor, SeedfinderLogResult result) {
 		boolean daily = Dungeon.daily;
 		try {
 			Dungeon.seed = seed;
@@ -1031,21 +1031,29 @@ public class SeedFinder {
 				}
 			});
 			Map<Room, ArrayList<String>> lootByRoom = new IdentityHashMap<>();
+			Map<Room, ArrayList<String>> mapLoot = new IdentityHashMap<>();
+			byte[] markers = new byte[vault.map.length];
 			for (Heap heap : heaps) {
 				Room room = vault.room(heap.pos);
 				for (Item item : heap.items) {
-					if (finalRewards.containsKey(item)) continue;
+					boolean finalReward = finalRewards.containsKey(item);
 					String name = vaultItemName(item);
 					String source = heap.type == Type.HEAP
 							? Messages.get(SeedFinder.class, "vault_ground") : heap.title();
-					addVaultLoot(lootByRoom, room, name + " (" + source + ")");
+					String line = name + " (" + source + ")";
+					addVaultLoot(mapLoot, room, line);
+					byte marker = (byte)(finalReward ? 4 : heap.type == Type.HEAP ? 1 : 2);
+					if (heap.pos >= 0 && heap.pos < markers.length && marker > markers[heap.pos]) markers[heap.pos] = marker;
+					if (!finalReward) addVaultLoot(lootByRoom, room, line);
 				}
 			}
 			for (Mob mob : vault.mobs) {
 				if (mob instanceof VaultMirror && ((VaultMirror) mob).reward != null) {
 					Room room = vault.room(mob.pos);
-					addVaultLoot(lootByRoom, room,
-							vaultItemName(((VaultMirror) mob).reward) + " (" + Messages.get(SeedFinder.class, "vault_mirror") + ")");
+					String line = vaultItemName(((VaultMirror) mob).reward) + " (" + Messages.get(SeedFinder.class, "vault_mirror") + ")";
+					addVaultLoot(lootByRoom, room, line);
+					addVaultLoot(mapLoot, room, line);
+					if (mob.pos >= 0 && mob.pos < markers.length) markers[mob.pos] = 3;
 				}
 			}
 			StringBuilder out = new StringBuilder(Messages.get(SeedFinder.class, "vault_preview_notice")).append("\n\n");
@@ -1057,6 +1065,33 @@ public class SeedFinder {
 					return a.left < b.left ? -1 : a.left == b.left ? 0 : 1;
 				}
 			});
+			// Copy immutable display data before the preview run is reset.
+			VaultMapPreview map = new VaultMapPreview();
+			map.width = vault.width();
+			map.height = vault.height();
+			map.terrain = vault.map.clone();
+			map.markers = markers;
+			map.rooms = new ArrayList<>();
+			for (Room room : rooms) {
+				VaultMapRoom entry = new VaultMapRoom();
+				entry.left = room.left;
+				entry.top = room.top;
+				entry.right = room.right;
+				entry.bottom = room.bottom;
+				entry.name = roomDisplayName(room);
+				String cls = room.getClass().getSimpleName();
+				entry.kind = cls.equals("VaultFinalRoom") ? 4 : cls.equals("VaultTokensRoom") ? 3
+						: cls.equals("VaultEntranceRoom") ? 0
+						: (room instanceof com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.vault.treasure.VaultTreasureRoom
+						|| cls.equals("VaultSimpleEnemyTreasureRoom")) ? 2 : 1;
+				entry.bookcase = cls.equals("VaultBookcaseTreasureRoom");
+				ArrayList<String> items = mapLoot.get(room);
+				entry.items = items == null ? new ArrayList<String>() : new ArrayList<>(items);
+				map.rooms.add(entry);
+			}
+			ArrayList<String> unassigned = mapLoot.get(null);
+			map.unassigned = unassigned == null ? new ArrayList<String>() : new ArrayList<>(unassigned);
+			result.vaultMap = map;
 			if (lootByRoom.containsKey(null)) rooms.add(null);
 			for (Room room : rooms) {
 				ArrayList<String> items = lootByRoom.get(room);
@@ -1096,11 +1131,27 @@ public class SeedFinder {
 		return logSeedItems("0", SPDSettings.seedfinderFloors());
 	}
 
+	public static class VaultMapPreview {
+		public int width, height;
+		public int[] terrain;
+		public byte[] markers;
+		public ArrayList<VaultMapRoom> rooms;
+		public ArrayList<String> unassigned;
+	}
+
+	public static class VaultMapRoom {
+		public int left, top, right, bottom, kind;
+		public String name;
+		public boolean bookcase;
+		public ArrayList<String> items;
+	}
+
 	public class SeedfinderLogResult {
 		public long seed;
 		public String[] main;
 		public String[] rooms;
 		public int vaultFloor;
 		public String vault;
+		public VaultMapPreview vaultMap;
 	}
 }
