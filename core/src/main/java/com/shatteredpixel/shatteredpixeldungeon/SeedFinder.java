@@ -975,6 +975,15 @@ public class SeedFinder {
 
 	// Replay an isolated, unsaved menu-analysis run. The actual branch has its
 	// own depth seed; the original game still uses unseeded consumable shuffles.
+	private static void addVaultLoot(Map<Room, ArrayList<String>> lootByRoom, Room room, String item) {
+		ArrayList<String> items = lootByRoom.get(room);
+		if (items == null) {
+			items = new ArrayList<>();
+			lootByRoom.put(room, items);
+		}
+		items.add(item);
+	}
+
 	private String previewVault(long seed, String seedText, int impFloor) {
 		boolean daily = Dungeon.daily;
 		try {
@@ -986,8 +995,15 @@ public class SeedFinder {
 				Dungeon.depth = depth;
 				Level main = Dungeon.newLevel();
 				if (depth == impFloor) {
-					boolean found = main instanceof RegularLevel
-							&& ((RegularLevel) main).rooms().stream().anyMatch(r -> r instanceof AmbitiousImpRoom);
+					boolean found = false;
+					if (main instanceof RegularLevel) {
+						for (Room room : ((RegularLevel) main).rooms()) {
+							if (room instanceof AmbitiousImpRoom) {
+								found = true;
+								break;
+							}
+						}
+					}
 					if (!found || Imp.Quest.rewardOptions.isEmpty()) {
 						return Messages.get(SeedFinder.class, "vault_unavailable");
 					}
@@ -1008,7 +1024,12 @@ public class SeedFinder {
 			vault.createForSeedPreview();
 
 			ArrayList<Heap> heaps = new ArrayList<>(vault.heaps.valueList());
-			heaps.sort(Comparator.comparingInt(h -> h.pos));
+			Collections.sort(heaps, new Comparator<Heap>() {
+				@Override
+				public int compare(Heap a, Heap b) {
+					return a.pos < b.pos ? -1 : a.pos == b.pos ? 0 : 1;
+				}
+			});
 			Map<Room, ArrayList<String>> lootByRoom = new IdentityHashMap<>();
 			for (Heap heap : heaps) {
 				Room room = vault.room(heap.pos);
@@ -1017,19 +1038,25 @@ public class SeedFinder {
 					String name = vaultItemName(item);
 					String source = heap.type == Type.HEAP
 							? Messages.get(SeedFinder.class, "vault_ground") : heap.title();
-					lootByRoom.computeIfAbsent(room, r -> new ArrayList<>()).add(name + " (" + source + ")");
+					addVaultLoot(lootByRoom, room, name + " (" + source + ")");
 				}
 			}
 			for (Mob mob : vault.mobs) {
 				if (mob instanceof VaultMirror && ((VaultMirror) mob).reward != null) {
 					Room room = vault.room(mob.pos);
-					lootByRoom.computeIfAbsent(room, r -> new ArrayList<>()).add(
+					addVaultLoot(lootByRoom, room,
 							vaultItemName(((VaultMirror) mob).reward) + " (" + Messages.get(SeedFinder.class, "vault_mirror") + ")");
 				}
 			}
 			StringBuilder out = new StringBuilder(Messages.get(SeedFinder.class, "vault_preview_notice")).append("\n\n");
 			ArrayList<Room> rooms = vault.rooms();
-			rooms.sort(Comparator.comparingInt((Room r) -> r.top).thenComparingInt(r -> r.left));
+			Collections.sort(rooms, new Comparator<Room>() {
+				@Override
+				public int compare(Room a, Room b) {
+					if (a.top != b.top) return a.top < b.top ? -1 : 1;
+					return a.left < b.left ? -1 : a.left == b.left ? 0 : 1;
+				}
+			});
 			if (lootByRoom.containsKey(null)) rooms.add(null);
 			for (Room room : rooms) {
 				ArrayList<String> items = lootByRoom.get(room);
@@ -1040,7 +1067,9 @@ public class SeedFinder {
 			}
 			if (lootByRoom.isEmpty()) out.append(Messages.get(SeedFinder.class, "vault_unavailable"));
 			return out.toString();
-		} catch (RuntimeException ex) {
+		} catch (RuntimeException | LinkageError ex) {
+			// RoboVM can compile against methods that are absent at runtime.
+			// Optional preview failure must not prevent the main results from opening.
 			Gdx.app.error("SeedFinder", "Vault preview failed", ex);
 			return Messages.get(SeedFinder.class, "vault_unavailable");
 		} finally {
