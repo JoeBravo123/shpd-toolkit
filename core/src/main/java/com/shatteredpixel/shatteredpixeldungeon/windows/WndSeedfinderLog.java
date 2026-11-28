@@ -47,7 +47,7 @@ public class WndSeedfinderLog extends Window {
     private final SeedfinderLogResult result;
     private final int floorCount;
     private int selectedIndex;
-    private boolean rooms;
+    private int mode; // 0 = items, 1 = rooms, 2 = vault
     private final int textWidth;
 
     private final RenderedTextBlock floorLabel;
@@ -57,6 +57,8 @@ public class WndSeedfinderLog extends Window {
     private final StyledButton floorButton;
     private final StyledButton next;
     private final StyledButton roomButton;
+    private final StyledButton itemsButton;
+    private final StyledButton vaultButton;
 
     public WndSeedfinderLog(Image icon, String title, SeedfinderLogResult result) {
         super();
@@ -79,16 +81,26 @@ public class WndSeedfinderLog extends Window {
         add(titlebar);
 
         float headerY = titlebar.bottom() + 5;
-        roomButton = new StyledButton(Chrome.Type.GREY_BUTTON_TR, message("rooms"), 7) {
+        roomButton = new StyledButton(Chrome.Type.GREY_BUTTON, message("rooms"), 7) {
             @Override
             protected void onClick() {
-                rooms = !rooms;
+                mode = hasVault() ? 1 : (mode == 1 ? 0 : 1);
                 refresh();
             }
         };
+        itemsButton = new StyledButton(Chrome.Type.GREY_BUTTON, message("items"), 7) {
+            @Override
+            protected void onClick() { mode = 0; refresh(); }
+        };
+        vaultButton = new StyledButton(Chrome.Type.GREY_BUTTON, message("vault"), 7) {
+            @Override
+            protected void onClick() { mode = 2; refresh(); }
+        };
         float toggleWidth = Math.max(36, Math.min(w / 2f, roomButton.reqWidth() + 14));
         roomButton.setRect(w - toggleWidth, headerY, toggleWidth, BUTTON_HEIGHT);
+        add(itemsButton);
         add(roomButton);
+        add(vaultButton);
 
         floorLabel = PixelScene.renderTextBlock(7);
         floorLabel.hardlight(TITLE_COLOR);
@@ -132,8 +144,9 @@ public class WndSeedfinderLog extends Window {
             }
         };
 
-        previous.text("<");
-        next.text(">");
+        previous.icon(ToolkitTheme.navigationIcon(-1));
+        next.icon(ToolkitTheme.navigationIcon(1));
+        floorButton.icon(ToolkitTheme.navigationIcon(0));
         floorButton.textColor(ToolkitTheme.TEXT);
         float arrowWidth = 20;
         float backWidth = Math.max(32, back.reqWidth() + 6);
@@ -171,19 +184,47 @@ public class WndSeedfinderLog extends Window {
         int clamped = Math.max(0, Math.min(floorCount - 1, index));
         if (clamped != selectedIndex) {
             selectedIndex = clamped;
+            if (mode == 2) mode = 0;
             rememberFloor();
             refresh();
         }
     }
 
+    private boolean hasVault() {
+        return result.vault != null && result.vaultFloor == selectedIndex + 1;
+    }
+
     private void refresh() {
-        floorLabel.text(message("current_floor", selectedIndex + 1), (int)roomButton.left() - GAP);
-        floorLabel.setPos(0, roomButton.top() + (BUTTON_HEIGHT - floorLabel.height()) / 2);
+        boolean vaultAvailable = hasVault();
+        if (!vaultAvailable && mode == 2) mode = 0;
+        float y = roomButton.top();
+        itemsButton.visible = itemsButton.active = vaultAvailable;
+        vaultButton.visible = vaultButton.active = vaultAvailable;
+        float labelWidth;
+        if (vaultAvailable) {
+            float tabW = Math.min(39, (width - 30 - 3 * GAP) / 3f);
+            float left = width - 3 * tabW - 2 * GAP;
+            itemsButton.setRect(left, y, tabW, BUTTON_HEIGHT);
+            roomButton.setRect(left + tabW + GAP, y, tabW, BUTTON_HEIGHT);
+            vaultButton.setRect(left + 2 * (tabW + GAP), y, tabW, BUTTON_HEIGHT);
+            itemsButton.setChrome(mode == 0 ? Chrome.Type.PRIMARY_BUTTON : Chrome.Type.GREY_BUTTON);
+            roomButton.setChrome(mode == 1 ? Chrome.Type.PRIMARY_BUTTON : Chrome.Type.GREY_BUTTON);
+            vaultButton.setChrome(mode == 2 ? Chrome.Type.PRIMARY_BUTTON : Chrome.Type.GREY_BUTTON);
+            roomButton.text(message("rooms"));
+            labelWidth = left - GAP;
+        } else {
+            roomButton.text(message(mode == 1 ? "items" : "rooms"));
+            float toggleWidth = Math.max(36, Math.min(width / 2f, roomButton.reqWidth() + 14));
+            roomButton.setRect(width - toggleWidth, y, toggleWidth, BUTTON_HEIGHT);
+            roomButton.setChrome(Chrome.Type.GREY_BUTTON);
+            labelWidth = roomButton.left() - GAP;
+        }
+        floorLabel.text(message("current_floor", selectedIndex + 1), Math.max(1, (int)labelWidth));
+        floorLabel.setPos(0, y + (BUTTON_HEIGHT - floorLabel.height()) / 2);
         floorButton.text(message("floor_action", selectedIndex + 1, floorCount));
-        roomButton.text(message(rooms ? "items" : "rooms"));
         previous.enable(selectedIndex > 0);
         next.enable(selectedIndex + 1 < floorCount);
-        String details = (rooms ? result.rooms : result.main)[selectedIndex];
+        String details = mode == 2 ? result.vault : (mode == 1 ? result.rooms : result.main)[selectedIndex];
         if (details == null || details.trim().isEmpty()) details = message("empty");
         // Highlight section headings, not individual item names or search data.
         details = details.replaceAll("(?m)^([^\\n-][^\\n:：]{0,24}[:：]) *$", "_$1_");
@@ -220,6 +261,8 @@ public class WndSeedfinderLog extends Window {
                 };
                 if (i == selectedIndex) {
                     button.textColor(ToolkitTheme.TEXT);
+                } else if (i + 1 == result.vaultFloor) {
+                    button.textColor(0xE5C68E);
                 } else if ((i + 1) % 5 == 0) {
                     button.textColor(0xE5B77E);
                 }

@@ -122,6 +122,20 @@ import java.util.HashSet;
 
 public class VaultLevel extends CityLevel {
 
+	/** Menu preview only: preserve the original mutable solution-item ordering. */
+	public void createForSeedPreview() {
+		Class<? extends Item>[] savedT2 = T2SolveItems.clone();
+		Class<? extends Item>[] savedT3 = T3SolveItems.clone();
+		ArrayList<Class<? extends VaultTreasureRoom>> savedTreasureRooms = VaultTreasureRoom.treasuresToSpawn;
+		try {
+			create();
+		} finally {
+			System.arraycopy(savedT2, 0, T2SolveItems, 0, savedT2.length);
+			System.arraycopy(savedT3, 0, T3SolveItems, 0, savedT3.length);
+			VaultTreasureRoom.treasuresToSpawn = savedTreasureRooms;
+		}
+	}
+
 	@Override
 	public void playLevelMusic() {
 		Music.INSTANCE.play(Assets.Music.CITY_TENSE, true);

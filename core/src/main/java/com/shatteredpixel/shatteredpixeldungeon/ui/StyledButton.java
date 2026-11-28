@@ -32,6 +32,7 @@ import com.watabou.noosa.audio.Sample;
 public class StyledButton extends Button {
 	
 	protected NinePatch bg;
+	private Chrome.Type chromeType;
 	protected RenderedTextBlock text;
 	protected Image icon;
 	public boolean leftJustify = false;
@@ -45,6 +46,7 @@ public class StyledButton extends Button {
 	public StyledButton(Chrome.Type type, String label, int size ){
 		super();
 		
+		chromeType = type;
 		bg = Chrome.get( type );
 		addToBack( bg );
 		
@@ -102,7 +104,7 @@ public class StyledButton extends Button {
 	
 	@Override
 	protected void onPointerDown() {
-		bg.brightness( 1.2f );
+		bg.brightness( 0.87f );
 		Sample.INSTANCE.play( Assets.Sounds.CLICK );
 	}
 	
@@ -111,6 +113,16 @@ public class StyledButton extends Button {
 			bg.resetColor();
 	}
 	
+	public void setChrome(Chrome.Type type) {
+		if (type == chromeType) return;
+		remove(bg);
+		bg.destroy();
+		chromeType = type;
+		bg = Chrome.get(type);
+		addToBack(bg);
+		layout();
+	}
+
 	public void enable( boolean value ) {
 		active = value;
 		text.alpha( value ? 1.0f : 0.3f );

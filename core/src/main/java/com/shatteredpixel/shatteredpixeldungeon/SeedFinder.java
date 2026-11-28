@@ -58,6 +58,12 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWea
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.RegularLevel;
+import com.shatteredpixel.shatteredpixeldungeon.levels.VaultLevel;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.AmbitiousImpRoom;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.VaultMirror;
+import java.util.Comparator;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SecretRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SecretWellRoom;
@@ -497,6 +503,10 @@ public class SeedFinder {
 			Dungeon.seed = DungeonSeed.convertFromText(seed);
 		}
 
+		initializePreparedRun();
+	}
+
+	private void initializePreparedRun() {
 		GamesInProgress.selectedClass = HeroClass.WARRIOR;
 		Dungeon.init(Options.challenges);
 		// The 4.0 quest reset leaves these populated until its room spawns again.
@@ -673,6 +683,8 @@ public class SeedFinder {
 		}
 
 		boolean impRewardsLogged = false;
+		int impFloor = 0;
+		String resolvedSeedText = Dungeon.customSeedText;
 
 		for (int i = 0; i < floors; i++) {
 
@@ -850,6 +862,7 @@ public class SeedFinder {
 				}
 				addTextQuest(Messages.get(SeedFinder.class, "imp_reward"), rewards, builder);
 				impRewardsLogged = true;
+				impFloor = Dungeon.depth;
 			}
 
 			heaps.addAll(getMobDrops(l));
@@ -939,7 +952,106 @@ public class SeedFinder {
 
 		result.main = log;
 		result.rooms = log_roomsonly;
+		// Mainline strings are complete before the branch is ever generated.
+		if (impFloor > 0) {
+			result.vaultFloor = impFloor;
+			result.vault = previewVault(result.seed, resolvedSeedText, impFloor);
+		}
 		return result;
+	}
+
+	private static String roomDisplayName(Room room) {
+		if (room == null) return Messages.get(SeedFinder.class, "vault_unassigned");
+		String simple = room.getClass().getSimpleName();
+		String name = Messages.get(SeedFinder.class, "room_name_" + simple.toLowerCase(Locale.ROOT));
+		return Messages.NO_TEXT_FOUND.equals(name)
+				? simple.replaceAll("([a-z])([A-Z])", "$1 $2") : name;
+	}
+
+	private static String vaultItemName(Item item) {
+		item.identify(false);
+		return (item.cursed ? Messages.get(SeedFinder.class, "cursed_prefix") : "") + item.title();
+	}
+
+	// Replay an isolated, unsaved menu-analysis run. The actual branch has its
+	// own depth seed; the original game still uses unseeded consumable shuffles.
+	private String previewVault(long seed, String seedText, int impFloor) {
+		boolean daily = Dungeon.daily;
+		try {
+			Dungeon.seed = seed;
+			Dungeon.customSeedText = seedText;
+			initializePreparedRun();
+			if (Options.logTrinkets) getTrinkets();
+			for (int depth = 1; depth <= impFloor; depth++) {
+				Dungeon.depth = depth;
+				Level main = Dungeon.newLevel();
+				if (depth == impFloor) {
+					boolean found = main instanceof RegularLevel
+							&& ((RegularLevel) main).rooms().stream().anyMatch(r -> r instanceof AmbitiousImpRoom);
+					if (!found || Imp.Quest.rewardOptions.isEmpty()) {
+						return Messages.get(SeedFinder.class, "vault_unavailable");
+					}
+				}
+				// Mirror the quest bookkeeping of mainline analysis, without reporting or saving.
+				if (Ghost.Quest.armor != null) Ghost.Quest.complete();
+				if (Wandmaker.Quest.wand1 != null) Wandmaker.Quest.complete();
+				if (Blacksmith.Quest.type != 0) Blacksmith.Quest.type = 0;
+			}
+
+			// VaultFinalRoom moves these objects into heaps and clears rewardOptions.
+			// Exclude those same objects, already displayed as final rewards on the main floor.
+			Map<Item, Boolean> finalRewards = new IdentityHashMap<>();
+			for (Item reward : Imp.Quest.rewardOptions) finalRewards.put(reward, true);
+			Dungeon.depth = impFloor;
+			Dungeon.branch = 1;
+			VaultLevel vault = new VaultLevel();
+			vault.createForSeedPreview();
+
+			ArrayList<Heap> heaps = new ArrayList<>(vault.heaps.valueList());
+			heaps.sort(Comparator.comparingInt(h -> h.pos));
+			Map<Room, ArrayList<String>> lootByRoom = new IdentityHashMap<>();
+			for (Heap heap : heaps) {
+				Room room = vault.room(heap.pos);
+				for (Item item : heap.items) {
+					if (finalRewards.containsKey(item)) continue;
+					String name = vaultItemName(item);
+					String source = heap.type == Type.HEAP
+							? Messages.get(SeedFinder.class, "vault_ground") : heap.title();
+					lootByRoom.computeIfAbsent(room, r -> new ArrayList<>()).add(name + " (" + source + ")");
+				}
+			}
+			for (Mob mob : vault.mobs) {
+				if (mob instanceof VaultMirror && ((VaultMirror) mob).reward != null) {
+					Room room = vault.room(mob.pos);
+					lootByRoom.computeIfAbsent(room, r -> new ArrayList<>()).add(
+							vaultItemName(((VaultMirror) mob).reward) + " (" + Messages.get(SeedFinder.class, "vault_mirror") + ")");
+				}
+			}
+			StringBuilder out = new StringBuilder(Messages.get(SeedFinder.class, "vault_preview_notice")).append("\n\n");
+			ArrayList<Room> rooms = vault.rooms();
+			rooms.sort(Comparator.comparingInt((Room r) -> r.top).thenComparingInt(r -> r.left));
+			if (lootByRoom.containsKey(null)) rooms.add(null);
+			for (Room room : rooms) {
+				ArrayList<String> items = lootByRoom.get(room);
+				if (items == null || items.isEmpty()) continue;
+				out.append(roomDisplayName(room)).append(":\n");
+				for (String item : items) out.append("- ").append(item).append("\n");
+				out.append("\n");
+			}
+			if (lootByRoom.isEmpty()) out.append(Messages.get(SeedFinder.class, "vault_unavailable"));
+			return out.toString();
+		} catch (RuntimeException ex) {
+			Gdx.app.error("SeedFinder", "Vault preview failed", ex);
+			return Messages.get(SeedFinder.class, "vault_unavailable");
+		} finally {
+			// Do not leave branch state or consumed rewards in the next menu analysis.
+			Dungeon.level = null;
+			Dungeon.seed = seed;
+			Dungeon.customSeedText = seedText;
+			Dungeon.daily = daily;
+			initializePreparedRun();
+			RegularLevel.roomList = new ArrayList<>();
+		}
 	}
 
 	// logging without arguments uses SHPDSettings
@@ -959,5 +1071,7 @@ public class SeedFinder {
 		public long seed;
 		public String[] main;
 		public String[] rooms;
+		public int vaultFloor;
+		public String vault;
 	}
 }

@@ -65,9 +65,9 @@ public class Chrome {
 		case RED_BUTTON:
 			return ToolkitTheme.patch("action", 6, 6, 2, 2, 2, 2, 2, 0xFF35465A, 0xFF4A6075);
 		case PRIMARY_BUTTON:
-			return ToolkitTheme.patch("primary", 10, 10, 3, 3, 3, 3, 3, 0xFF28685F, 0xFF408C80);
+			return ToolkitTheme.patch("primary", 10, 10, 3, 3, 3, 3, 3, 0xFF30685F, 0xFF4A8278);
 		case GREY_BUTTON:
-			return ToolkitTheme.patch("secondary", 8, 8, 3, 3, 3, 3, 3, 0xFF2D3948, 0xFF435367);
+			return ToolkitTheme.patch("secondary", 8, 8, 3, 3, 3, 3, 3, 0xFF38485B, 0xFF506276);
 		case TAG:
 			return new NinePatch( Asset, 22, 18, 16, 14, 3 );
 		case GEM:
